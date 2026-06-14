@@ -17,7 +17,8 @@
 - Основной файл: `yoleotard-product-card-enhancer/yoleotard-product-card-enhancer.php`.
 - Фронтенд-логика: `yoleotard-product-card-enhancer/assets/js/frontend.js`.
 - Стили: `yoleotard-product-card-enhancer/assets/css/frontend.css`.
-- Версия плагина: `1.0.1`.
+- Версия плагина: `1.0.2`.
+- Архив обновления: `plugin-archives/yoleotard-product-card-enhancer.zip`.
 - Опция настроек WordPress: `yo_pce_settings`.
 - Админ-страница: `Settings -> YO Product Cards`.
 
@@ -39,9 +40,10 @@
 4. Сформулировать короткий план изменения.
 5. Внести минимальные изменения.
 6. Выполнить локальные проверки.
-7. Обновить документацию, если поведение или настройки изменились.
-8. Закоммитить и отправить в GitHub.
-9. Отдельно отметить, что нужно проверить на живом сайте.
+7. Если это релиз или установка на сайт, собрать ZIP через `python tools\package-plugin.py`.
+8. Обновить документацию, если поведение или настройки изменились.
+9. Закоммитить и отправить в GitHub.
+10. Отдельно отметить, что нужно проверить на живом сайте.
 
 ## Роли агентов
 
@@ -87,9 +89,27 @@
 ```powershell
 php -l yoleotard-product-card-enhancer\yoleotard-product-card-enhancer.php
 node --check yoleotard-product-card-enhancer\assets\js\frontend.js
+node tests\frontend-sale-button-labels.test.js
+python tools\package-plugin.py
 git diff --check
 git status -sb
 ```
+
+## Правило упаковки WordPress ZIP
+
+Архив для установки должен обновлять текущий плагин, а не ставиться как новый. Для этого внутри ZIP должна быть ровно одна верхняя папка:
+
+```text
+yoleotard-product-card-enhancer/
+```
+
+Главный файл должен оставаться:
+
+```text
+yoleotard-product-card-enhancer/yoleotard-product-card-enhancer.php
+```
+
+Нельзя собирать ZIP методом, который кладет файлы без верхней папки или добавляет Windows-пути с `\`. Перед пересборкой основного архива предыдущий `plugin-archives/yoleotard-product-card-enhancer.zip` сохраняется рядом как timestamp-backup.
 
 ## Живые проверки после установки на сайт
 
@@ -113,8 +133,7 @@ git status -sb
 
 ## Ближайший roadmap
 
-1. Добавить release ZIP workflow и правило сохранения предыдущего архива.
-2. Разбить `frontend.js` на понятные секции или модули без изменения поведения.
-3. Добавить DOM smoke-тесты для currency/units/sale.
-4. Подтвердить домен и URL фида.
-5. Добавить changelog для версий плагина.
+1. Разбить `frontend.js` на понятные секции или модули без изменения поведения.
+2. Добавить DOM smoke-тесты для currency/units/sale.
+3. Подтвердить домен и URL фида.
+4. Добавить автоматическую сборку ZIP в release workflow.

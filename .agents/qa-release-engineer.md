@@ -19,6 +19,8 @@
 git status -sb
 php -l yoleotard-product-card-enhancer\yoleotard-product-card-enhancer.php
 node --check yoleotard-product-card-enhancer\assets\js\frontend.js
+node tests\frontend-sale-button-labels.test.js
+python tools\package-plugin.py
 git diff --check
 ```
 
@@ -27,6 +29,7 @@ git diff --check
 - Проверить, что в git попадают только файлы этого проекта.
 - Проверить, что документация обновлена, если менялось поведение.
 - Проверить, что версия плагина обновлена, если это релизная правка.
+- Проверить, что ZIP содержит одну верхнюю папку `yoleotard-product-card-enhancer/`, чтобы WordPress обновлял текущий плагин.
 - Проверить, что не закоммичены архивы, логи или временные файлы без явного решения.
 
 ## После push

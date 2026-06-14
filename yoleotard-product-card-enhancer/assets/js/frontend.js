@@ -373,7 +373,7 @@
         var newPrice = oldPrice - discount;
 
         btn.classList.add('sale-old-btn');
-        btn.innerHTML = (saleCfg.oldButtonText || 'Buy') + ' • <span class="yo-price" data-eur="' + oldPrice + '">' + oldPrice + ' €</span>';
+        btn.innerHTML = (saleCfg.oldButtonText || 'Buy') + ' <span class="yo-price" data-eur="' + oldPrice + '">' + oldPrice + ' €</span>';
         btn.href = '#';
         btn.removeAttribute('data-type');
         btn.removeAttribute('data-caption');
@@ -413,7 +413,7 @@
           '<polyline fill="none" stroke="currentColor" stroke-width="1.1" points="0 2 3.2 4 5.3 12.5 16 12.5 18 6.5 8 6.5"></polyline>' +
           '</svg>' +
           '</span>' +
-          ' ' + (saleCfg.newButtonText || 'Buy now') + ' • <span class="yo-price" data-eur="' + newPrice + '">' + newPrice + ' €</span>' +
+          ' ' + (saleCfg.newButtonText || 'Buy now') + ' <span class="yo-price" data-eur="' + newPrice + '">' + newPrice + ' €</span>' +
           ' <span class="sale-badge" data-eur="' + discount + '">−' + discount + ' €</span>';
 
         var icon = btn.querySelector('[uk-icon]');

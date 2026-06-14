@@ -163,14 +163,38 @@ Settings -> YO Product Cards
 ```powershell
 php -l yoleotard-product-card-enhancer\yoleotard-product-card-enhancer.php
 node --check yoleotard-product-card-enhancer\assets\js\frontend.js
+node tests\frontend-sale-button-labels.test.js
 git diff --check
 ```
 
 Живая проверка на сайте должна выполняться отдельно после установки/обновления плагина в WordPress. Локальные проверки подтверждают синтаксис и структуру, но не подтверждают работу на реальной теме, UIkit-разметке и актуальном фиде.
 
+## Архив для установки и обновления
+
+Чтобы WordPress обновлял уже установленный плагин, а не ставил новый, ZIP должен содержать одну верхнюю папку с тем же slug:
+
+```text
+yoleotard-product-card-enhancer/
+  yoleotard-product-card-enhancer.php
+  assets/
+```
+
+Архив собирается командой:
+
+```powershell
+python tools\package-plugin.py
+```
+
+Готовый файл:
+
+```text
+plugin-archives/yoleotard-product-card-enhancer.zip
+```
+
+Скрипт сохраняет предыдущий ZIP рядом с timestamp в имени, затем пересобирает основной архив и проверяет структуру: одна верхняя папка, без Windows-разделителей `\`, с обязательными PHP/JS/CSS файлами.
+
 ## Следующие рекомендуемые улучшения
 
-- Добавить changelog и версионирование релизных ZIP-архивов.
 - Исправить доменную неоднозначность `yoloetard.com` / `yoleotard.com`, если это не опечатка.
 - Добавить smoke-тесты на DOM-логику через фиктивную HTML-карточку.
 - Вынести JS-модули по зонам ответственности: currency, units, sale, feed.
