@@ -1,6 +1,7 @@
 import shutil
 import sys
 import zipfile
+import tempfile
 from datetime import datetime
 from pathlib import Path
 
@@ -17,7 +18,7 @@ def archive_existing_zip():
     if not ARCHIVE_PATH.exists():
         return None
 
-    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    stamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
     backup = ARCHIVE_DIR / f"{PLUGIN_SLUG}-{stamp}.zip"
     shutil.copy2(ARCHIVE_PATH, backup)
     return backup
@@ -47,6 +48,8 @@ def build_zip():
 def verify_zip():
     with zipfile.ZipFile(ARCHIVE_PATH) as zf:
         names = zf.namelist()
+        if zf.testzip() is not None:
+            raise SystemExit("Archive CRC verification failed.")
 
     if not names:
         raise SystemExit("Archive is empty.")
@@ -61,11 +64,20 @@ def verify_zip():
     required = {
         f"{PLUGIN_SLUG}/yoleotard-product-card-enhancer.php",
         f"{PLUGIN_SLUG}/assets/js/frontend.js",
+        f"{PLUGIN_SLUG}/assets/js/personalization.js",
         f"{PLUGIN_SLUG}/assets/css/frontend.css",
     }
     missing = required.difference(names)
     if missing:
         raise SystemExit("Archive is missing required files: " + ", ".join(sorted(missing)))
+
+    with tempfile.TemporaryDirectory() as directory:
+        with zipfile.ZipFile(ARCHIVE_PATH) as zf:
+            zf.extractall(directory)
+        for path in iter_plugin_files():
+            extracted = Path(directory) / path.relative_to(ROOT)
+            if not extracted.is_file() or extracted.read_bytes() != path.read_bytes():
+                raise SystemExit(f"Extracted file differs from source: {path}")
 
 
 def main():

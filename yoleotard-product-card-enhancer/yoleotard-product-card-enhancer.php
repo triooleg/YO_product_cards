@@ -2,7 +2,7 @@
 /**
  * Plugin Name: YOleotard Product Card Enhancer
  * Description: Adds product card enhancements for YOleotard: cm/in switcher, currency conversion, sale buttons, and Google Shopping feed ID matching.
- * Version: 1.0.2
+ * Version: 1.1.0
  * Author: YOleotard
  * Text Domain: yoleotard-product-card-enhancer
  */
@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
 
 final class YO_Product_Card_Enhancer {
     const OPTION_NAME = 'yo_pce_settings';
-    const VERSION = '1.0.2';
+    const VERSION = '1.1.0';
 
     public function __construct() {
         add_action('wp_enqueue_scripts', [$this, 'enqueue_frontend_assets']);
@@ -29,6 +29,13 @@ final class YO_Product_Card_Enhancer {
             'enable_currency' => '1',
             'enable_sale' => '1',
             'enable_feed_ids' => '1',
+            'enable_personalization' => '1',
+            'enable_size_adaptation' => '1',
+            'enable_matching_headpiece' => '1',
+            'enable_extra_rhinestones' => '1',
+            'size_adaptation_price' => '25',
+            'matching_headpiece_price' => '15',
+            'extra_rhinestones_price' => '10',
             'cm_per_inch' => '2.54',
             'default_unit' => 'cm',
             'default_currency' => 'EUR',
@@ -97,6 +104,7 @@ final class YO_Product_Card_Enhancer {
         );
 
         wp_localize_script('yo-product-card-enhancer', 'YOProductCardEnhancerSettings', $this->frontend_config($settings));
+        wp_enqueue_script('yo-product-card-personalization', $base_url . 'assets/js/personalization.js', ['yo-product-card-enhancer'], self::VERSION, true);
     }
 
     private function frontend_config($settings) {
@@ -106,6 +114,14 @@ final class YO_Product_Card_Enhancer {
             'enableCurrency' => !empty($settings['enable_currency']),
             'enableSale' => !empty($settings['enable_sale']),
             'enableFeedIds' => !empty($settings['enable_feed_ids']),
+            'personalization' => [
+                'enabled' => !empty($settings['enable_personalization']),
+                'services' => [
+                    'size_adaptation' => ['enabled' => !empty($settings['enable_size_adaptation']), 'priceEur' => (float) $settings['size_adaptation_price']],
+                    'matching_headpiece' => ['enabled' => !empty($settings['enable_matching_headpiece']), 'priceEur' => (float) $settings['matching_headpiece_price']],
+                    'extra_rhinestones' => ['enabled' => !empty($settings['enable_extra_rhinestones']), 'priceEur' => (float) $settings['extra_rhinestones_price']],
+                ],
+            ],
             'cmPerInch' => (float) $settings['cm_per_inch'],
             'defaultUnit' => sanitize_key($settings['default_unit']),
             'defaultCurrency' => strtoupper(sanitize_text_field($settings['default_currency'])),
@@ -204,17 +220,34 @@ final class YO_Product_Card_Enhancer {
     public function sanitize_settings($input) {
         $defaults = self::defaults();
         $input = is_array($input) ? $input : [];
-        $output = [];
+        $output = self::get_settings();
+        $tab = isset($input['_tab']) ? sanitize_key($input['_tab']) : 'general';
+        $checkbox_tabs = [
+            'enabled' => 'general', 'enable_units' => 'general', 'enable_currency' => 'general',
+            'enable_sale' => 'general', 'enable_feed_ids' => 'general',
+            'enable_personalization' => 'personalization', 'enable_size_adaptation' => 'personalization',
+            'enable_matching_headpiece' => 'personalization', 'enable_extra_rhinestones' => 'personalization',
+        ];
 
         foreach ($defaults as $key => $default) {
             if (strpos($key, 'enable') === 0 || $key === 'enabled') {
-                $output[$key] = !empty($input[$key]) ? '1' : '0';
+                if (isset($input[$key]) || (isset($checkbox_tabs[$key]) && $checkbox_tabs[$key] === $tab)) {
+                    $output[$key] = !empty($input[$key]) ? '1' : '0';
+                }
                 continue;
             }
+
+            if (!array_key_exists($key, $input)) continue;
 
             $value = isset($input[$key]) ? wp_unslash($input[$key]) : $default;
 
             switch ($key) {
+                case 'size_adaptation_price':
+                case 'matching_headpiece_price':
+                case 'extra_rhinestones_price':
+                    $output[$key] = is_scalar($value) && is_numeric($value) && is_finite((float) $value) && (float) $value >= 0
+                        ? (string) round((float) $value, 2) : $output[$key];
+                    break;
                 case 'cm_per_inch':
                     $output[$key] = is_numeric($value) && (float) $value > 0 ? (string) (float) $value : $default;
                     break;
@@ -257,7 +290,7 @@ final class YO_Product_Card_Enhancer {
 
     private function input($settings, $key, $label, $type = 'text', $description = '') {
         echo '<tr><th scope="row"><label for="yo_pce_' . esc_attr($key) . '">' . esc_html($label) . '</label></th><td>';
-        echo '<input class="regular-text" type="' . esc_attr($type) . '" id="yo_pce_' . esc_attr($key) . '" name="' . esc_attr(self::OPTION_NAME) . '[' . esc_attr($key) . ']" value="' . esc_attr($settings[$key]) . '">';
+        echo '<input class="regular-text" type="' . esc_attr($type) . '" ' . ($type === 'number' ? 'min="0" step="0.01" ' : '') . 'id="yo_pce_' . esc_attr($key) . '" name="' . esc_attr(self::OPTION_NAME) . '[' . esc_attr($key) . ']" value="' . esc_attr($settings[$key]) . '">';
         if ($description) {
             echo '<p class="description">' . esc_html($description) . '</p>';
         }
@@ -285,6 +318,7 @@ final class YO_Product_Card_Enhancer {
             'selectors' => 'Selectors',
             'sale' => 'Sale buttons',
             'feed' => 'Feed IDs',
+            'personalization' => 'Product personalization',
         ];
         if (!isset($tabs[$tab])) {
             $tab = 'general';
@@ -299,6 +333,7 @@ final class YO_Product_Card_Enhancer {
         echo '</nav>';
         echo '<form method="post" action="options.php">';
         settings_fields('yo_pce_settings_group');
+        echo '<input type="hidden" name="' . esc_attr(self::OPTION_NAME) . '[_tab]" value="' . esc_attr($tab) . '">';
         echo '<table class="form-table" role="presentation"><tbody>';
 
         if ($tab === 'general') {
@@ -312,6 +347,18 @@ final class YO_Product_Card_Enhancer {
             $this->input($settings, 'cm_per_inch', 'Centimeters per inch', 'number');
             $this->input($settings, 'default_unit', 'Default unit', 'text', 'Use cm or in.');
             $this->input($settings, 'default_currency', 'Default currency', 'text', 'Example: EUR, USD, GBP.');
+        }
+
+        if ($tab === 'personalization') {
+            echo '<tr><th scope="row">Product personalization</th><td>';
+            $this->checkbox($settings, 'enable_personalization', 'Enable product personalization');
+            echo '<br>'; $this->checkbox($settings, 'enable_size_adaptation', 'Adapt to my measurements');
+            echo '<br>'; $this->checkbox($settings, 'enable_matching_headpiece', 'Matching headpiece');
+            echo '<br>'; $this->checkbox($settings, 'enable_extra_rhinestones', 'Additional set of rhinestones');
+            echo '</td></tr>';
+            $this->input($settings, 'size_adaptation_price', 'Size adaptation price (EUR)', 'number');
+            $this->input($settings, 'matching_headpiece_price', 'Matching headpiece price (EUR)', 'number');
+            $this->input($settings, 'extra_rhinestones_price', 'Additional rhinestones price (EUR)', 'number');
         }
 
         if ($tab === 'currency') {

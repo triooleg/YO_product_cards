@@ -8,6 +8,8 @@
 
 - `yoleotard-product-card-enhancer/assets/js/frontend.js`
 - `yoleotard-product-card-enhancer/assets/css/frontend.css`
+- `yoleotard-product-card-enhancer/assets/js/personalization.js`
+- `docs/PERSONALIZATION.md` — контракт состояния и правила интеграции Checkout.
 
 ## Отвечает за
 
@@ -32,6 +34,7 @@
 
 ```powershell
 node --check yoleotard-product-card-enhancer\assets\js\frontend.js
+npm test
 ```
 
 ## Live checklist

@@ -17,7 +17,8 @@
 - Основной файл: `yoleotard-product-card-enhancer/yoleotard-product-card-enhancer.php`.
 - Фронтенд-логика: `yoleotard-product-card-enhancer/assets/js/frontend.js`.
 - Стили: `yoleotard-product-card-enhancer/assets/css/frontend.css`.
-- Версия плагина: `1.0.2`.
+- Версия плагина: `1.1.0`.
+- Модуль персонализации: `assets/js/personalization.js`. Контракт и проверки: `docs/PERSONALIZATION.md`.
 - Архив обновления: `plugin-archives/yoleotard-product-card-enhancer.zip`.
 - Опция настроек WordPress: `yo_pce_settings`.
 - Админ-страница: `Settings -> YO Product Cards`.
@@ -90,6 +91,8 @@
 php -l yoleotard-product-card-enhancer\yoleotard-product-card-enhancer.php
 node --check yoleotard-product-card-enhancer\assets\js\frontend.js
 node tests\frontend-sale-button-labels.test.js
+npm test
+php tests\settings.test.php
 python tools\package-plugin.py
 git diff --check
 git status -sb
@@ -122,6 +125,8 @@ yoleotard-product-card-enhancer/yoleotard-product-card-enhancer.php
 - Размеры в `data-cm` переключаются в inches и обратно.
 - Фид Google Shopping доступен и ID карточек назначаются корректно.
 - На мобильном экране кнопки скидки не ломают карточку товара.
+- Персонализация, popup и глобальная валюта работают после DOM-render темы.
+- Оплата услуг будет проверяться в отдельном этапе Checkout; текущий API передает только выбор клиента.
 
 ## Известные риски
 

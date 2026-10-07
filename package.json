@@ -1,0 +1,27 @@
+{
+  "name": "yo_product_cards",
+  "version": "1.1.0",
+  "description": "WordPress-плагин для сайта YOleotard, который переносит фронтенд-логику карточек товара из разрозненных вставок в управляемый плагин.",
+  "private": true,
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "playwright test",
+    "test:labels": "node tests/frontend-sale-button-labels.test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/triooleg/YO_product_cards.git"
+  },
+  "keywords": [],
+  "author": "",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/triooleg/YO_product_cards/issues"
+  },
+  "homepage": "https://github.com/triooleg/YO_product_cards#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.63.0"
+  }
+}

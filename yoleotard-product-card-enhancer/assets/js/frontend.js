@@ -1,7 +1,8 @@
 (function () {
   'use strict';
 
-  document.addEventListener('DOMContentLoaded', function () {
+  function start() {
+    if (window.YOProductCardCore) return;
     const cfg = window.YOProductCardEnhancerSettings || {};
     if (!cfg.enabled) return;
 
@@ -15,6 +16,9 @@
     const currencies = cfg.currencies || {};
     const defaultUnit = cfg.defaultUnit || 'cm';
     const defaultCurrency = cfg.defaultCurrency || 'EUR';
+    let activeCurrency = defaultCurrency;
+    let fxRequest = null;
+    let feedItemsCache = [];
 
     function safeQueryAll(root, selector) {
       try {
@@ -71,7 +75,8 @@
     }
 
     function findCardRoot(fromEl) {
-      return safeClosest(fromEl, selectors.card || '.uk-card, article, .el-item, li, .uk-panel, .tm-item, .yoo-item')
+      return safeClosest(fromEl, selectors.feedCard || '.el-item')
+        || safeClosest(fromEl, selectors.card || '.uk-card, article, .el-item, li, .uk-panel, .tm-item, .yoo-item')
         || safeClosest(fromEl, 'div')
         || document;
     }
@@ -89,29 +94,33 @@
         if (cached && cached.dateKey === nowDateKey() && cached.rates) return cached.rates;
       } catch (e) {}
 
-      const res = await fetch(NBU_URL, { cache: 'no-store' });
-      if (!res.ok) throw new Error('FX fetch failed: ' + res.status);
+      if (fxRequest) return fxRequest;
+      fxRequest = (async function () {
+        const res = await fetch(NBU_URL, { cache: 'no-store' });
+        if (!res.ok) throw new Error('FX fetch failed: ' + res.status);
 
-      const data = await res.json();
-      const map = {};
+        const data = await res.json();
+        const map = {};
 
-      for (const row of data) {
-        if (row && row.cc && typeof row.rate === 'number') map[row.cc] = row.rate;
-      }
+        for (const row of data) {
+          if (row && row.cc && typeof row.rate === 'number') map[row.cc] = row.rate;
+        }
 
-      const rates = {};
-      Object.keys(currencies).forEach(function (code) {
-        if (code === 'EUR') return;
-        rates[code] = map[code];
-      });
-      rates.EUR = map.EUR;
+        const rates = {};
+        Object.keys(currencies).forEach(function (code) {
+          if (code === 'EUR') return;
+          rates[code] = map[code];
+        });
+        rates.EUR = map.EUR;
 
-      localStorage.setItem(FX_CACHE_KEY, JSON.stringify({
-        dateKey: nowDateKey(),
-        rates: rates
-      }));
+        try { localStorage.setItem(FX_CACHE_KEY, JSON.stringify({
+          dateKey: nowDateKey(),
+          rates: rates
+        })); } catch (e) {}
 
-      return rates;
+        return rates;
+      })();
+      try { return await fxRequest; } finally { fxRequest = null; }
     }
 
     function formatCurrency(amount, ccy) {
@@ -129,6 +138,8 @@
     }
 
     async function updatePricesInCard(cardRoot, targetCcy) {
+      const stateRoot = cardRoot.dataset ? cardRoot : document.documentElement;
+      stateRoot.dataset.yoCurrency = targetCcy;
       let rates = null;
 
       if (targetCcy !== 'EUR') {
@@ -137,16 +148,23 @@
         } catch (e) {}
       }
 
+      if (stateRoot.dataset.yoCurrency !== targetCcy) return;
+      const displayCcy = targetCcy === 'EUR' || (rates && rates.EUR > 0 && rates[targetCcy] > 0) ? targetCcy : 'EUR';
+
       safeQueryAll(cardRoot, selectors.price || '.yo-price[data-eur]').forEach(el => {
         const eur = Number(el.getAttribute('data-eur'));
         if (!isFinite(eur)) return;
-        el.textContent = formatCurrency(convertEur(eur, rates, targetCcy), targetCcy);
+        const displayEur = el.dataset.yoDisplayEur === undefined ? eur : Number(el.dataset.yoDisplayEur);
+        el.textContent = formatCurrency(convertEur(displayEur, rates, displayCcy), displayCcy);
       });
 
       safeQueryAll(cardRoot, '.sale-badge[data-eur]').forEach(el => {
         const eur = Number(el.getAttribute('data-eur'));
         if (!isFinite(eur)) return;
-        el.textContent = '−' + formatCurrency(convertEur(eur, rates, targetCcy), targetCcy);
+        el.textContent = '−' + formatCurrency(convertEur(eur, rates, displayCcy), displayCcy);
+      });
+      safeQueryAll(cardRoot, '[data-yo-addon-price]').forEach(el => {
+        el.textContent = '+ ' + formatCurrency(convertEur(Number(el.dataset.yoAddonPrice), rates, displayCcy), displayCcy);
       });
     }
 
@@ -157,6 +175,9 @@
     }
 
     function updateMeasuresInCard(cardRoot, unit) {
+      const stateRoot = cardRoot.dataset ? cardRoot : document.documentElement;
+      stateRoot.dataset.yoUnit = unit;
+      safeQueryAll(cardRoot, '.yo-size-heading').forEach(el => { el.textContent = 'SIZE (' + unit.toUpperCase() + ')'; });
       safeQueryAll(cardRoot, selectors.measure || '.yo-measure[data-cm]').forEach(el => {
         const cmRaw = el.getAttribute('data-cm');
         const cmVals = parseRange(cmRaw);
@@ -240,6 +261,13 @@
           });
         });
 
+        feedItemsCache = feedItems;
+        applyFeedIds();
+      } catch(e) {}
+    }
+
+    function applyFeedIds() {
+        const feedItems = feedItemsCache;
         if (!feedItems.length) return;
 
         safeQueryAll(document, selectors.feedCard || '.el-item').forEach(function(card) {
@@ -249,15 +277,16 @@
           if (!titleEl) return;
 
           const cardSlug = yoCleanSlug(yoSlugify(titleEl.textContent));
+          if (!cardSlug) return;
 
           let matched = null;
 
           for (const item of feedItems) {
             if (
-              cardSlug.includes(item.slug) ||
+              cardSlug === item.slug ||
+              (item.slug && cardSlug.includes(item.slug)) ||
               item.slug.includes(cardSlug) ||
-              cardSlug.includes(item.titleSlug) ||
-              item.titleSlug.includes(cardSlug)
+              (item.titleSlug && (cardSlug.includes(item.titleSlug) || item.titleSlug.includes(cardSlug)))
             ) {
               matched = item;
               break;
@@ -268,9 +297,9 @@
 
           card.id = matched.slug;
           card.dataset.feedId = matched.slug;
+          document.dispatchEvent(new CustomEvent('yo:pce:identity', { detail: { card: card } }));
         });
 
-      } catch(e) {}
     }
 
     function addCurrencyOptions() {
@@ -294,8 +323,10 @@
     function initUnits() {
       if (!cfg.enableUnits) return;
       safeQueryAll(document, selectors.unitToggle || '.yo-unit-toggle').forEach(t => {
-        setActiveButtons(t, defaultUnit);
-        updateMeasuresInCard(findCardRoot(t), defaultUnit);
+        const card = findCardRoot(t);
+        const unit = card.dataset.yoUnit || defaultUnit;
+        setActiveButtons(t, unit);
+        updateMeasuresInCard(card, unit);
       });
     }
 
@@ -303,8 +334,8 @@
       if (!cfg.enableCurrency) return;
       addCurrencyOptions();
       safeQueryAll(document, selectors.currency || '[data-currency]').forEach(sel => {
-        if ('value' in sel) sel.value = defaultCurrency;
-        updatePricesInCard(findCardRoot(sel), defaultCurrency);
+        if ('value' in sel) sel.value = activeCurrency;
+        updatePricesInCard(findCardRoot(sel), activeCurrency);
       });
     }
 
@@ -332,7 +363,9 @@
         const sel = safeClosest(e.target, selectors.currency || '[data-currency]');
         if (!sel) return;
 
-        updatePricesInCard(findCardRoot(sel), sel.value);
+        if (!currencies[sel.value]) return;
+        activeCurrency = sel.value;
+        initCurrency();
       });
     }
 
@@ -358,8 +391,7 @@
         if (!card) return;
 
         var readyKey = saleCfg.readyData || 'saleReady';
-        if (card.dataset[readyKey]) return;
-        card.dataset[readyKey] = '1';
+        if (card.querySelector('.sale-new-btn')) return;
 
         var btn = card.querySelector(selectors.button || 'a.el-link.uk-button');
         if (!btn) return;
@@ -368,9 +400,10 @@
         if (!priceSpan) return;
 
         var oldPrice = parseFloat(priceSpan.dataset.eur);
-        if (isNaN(oldPrice)) return;
+        if (!Number.isFinite(oldPrice) || discount > oldPrice) return;
 
         var newPrice = oldPrice - discount;
+        var originalBtn = btn.cloneNode(true);
 
         btn.classList.add('sale-old-btn');
         btn.innerHTML = (saleCfg.oldButtonText || 'Buy') + ' <span class="yo-price" data-eur="' + oldPrice + '">' + oldPrice + ' €</span>';
@@ -380,24 +413,9 @@
         btn.removeAttribute('uk-lightbox');
         btn.removeAttribute('aria-label');
 
-        var newBtn = document.createElement('a');
-        newBtn.href = '#';
+        var newBtn = originalBtn;
 
-        Array.prototype.forEach.call(btn.attributes, function (attr) {
-          if (
-            attr.name === 'href' ||
-            attr.name === 'data-type' ||
-            attr.name === 'data-caption' ||
-            attr.name === 'aria-label' ||
-            attr.name === 'uk-lightbox'
-          ) return;
-
-          if (attr.name.startsWith('data-')) return;
-
-          newBtn.setAttribute(attr.name, attr.value);
-        });
-
-        newBtn.className = btn.className
+        newBtn.className = originalBtn.className
           .replace('sale-old-btn', '')
           .replace('uk-button-primary', saleCfg.newButtonClass || 'uk-button-danger')
           .replace('uk-button-secondary', saleCfg.newButtonClass || 'uk-button-danger')
@@ -416,6 +434,11 @@
           ' ' + (saleCfg.newButtonText || 'Buy now') + ' <span class="yo-price" data-eur="' + newPrice + '">' + newPrice + ' €</span>' +
           ' <span class="sale-badge" data-eur="' + discount + '">−' + discount + ' €</span>';
 
+        const newPriceNode = newBtn.querySelector('.yo-price');
+        Array.from(priceSpan.attributes).forEach(attr => {
+          if (attr.name !== 'data-eur' && attr.name !== 'class') newPriceNode.setAttribute(attr.name, attr.value);
+        });
+
         var icon = btn.querySelector('[uk-icon]');
         if (icon) {
           newBtn.appendChild(document.createTextNode(' '));
@@ -428,13 +451,19 @@
         btn.parentNode.insertBefore(wrapper, btn);
         wrapper.appendChild(btn);
         wrapper.appendChild(newBtn);
+        card.dataset[readyKey] = '1';
       });
     }
 
+    window.YOProductCardCore = { cfg, safeQueryAll, findCardRoot, parseRange, formatRange,
+      updateMeasuresInCard, setActiveButtons, updatePricesInCard, getCurrency: () => activeCurrency,
+      getSaleDiscountFromClass, applyFeedIds, initSaleButtons, initCurrency, initUnits };
     initUnits();
-    initCurrency();
     setupEvents();
     initSaleButtons();
+    initCurrency();
     yoLoadFeedAndApplyIds();
-  });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
 })();

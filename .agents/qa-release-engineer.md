@@ -20,6 +20,8 @@ git status -sb
 php -l yoleotard-product-card-enhancer\yoleotard-product-card-enhancer.php
 node --check yoleotard-product-card-enhancer\assets\js\frontend.js
 node tests\frontend-sale-button-labels.test.js
+npm test
+php tests\settings.test.php
 python tools\package-plugin.py
 git diff --check
 ```

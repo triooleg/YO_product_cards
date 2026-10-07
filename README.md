@@ -9,6 +9,10 @@ WordPress-плагин для сайта YOleotard, который перено�
 - переключение размеров из сантиметров в дюймы;
 - сопоставление карточек с Google Shopping feed и назначение `id` карточке товара;
 - админ-страницу WordPress для включения/отключения модулей и настройки селекторов.
+- дополнительные услуги Ready-to-Wear и popup уменьшения размеров до 4 cm.
+
+Текущая версия: **1.1.0**. Подробности новой функции и контракт Checkout: [Персонализация](docs/PERSONALIZATION.md).
+Оплата услуг требует следующего этапа интеграции Checkout: текущая версия готовит выбор и отображает предварительный итог.
 
 Важно: в текущем коде URL фида по умолчанию указывает на `https://www.yoleotard.com/?yoleotard_google_feed=1`. Если рабочий публичный домен проекта должен быть `https://yoloetard.com`, это нужно отдельно синхронизировать в настройках плагина и в коде по умолчанию.
 
@@ -18,7 +22,8 @@ WordPress-плагин для сайта YOleotard, который перено�
 yoleotard-product-card-enhancer/
   yoleotard-product-card-enhancer.php  # основной файл плагина WordPress
   assets/css/frontend.css              # стили для sale-кнопок и бейджа скидки
-  assets/js/frontend.js                # вся браузерная логика карточек
+  assets/js/frontend.js                # валюты, cm/in, скидки, фид и общий API
+  assets/js/personalization.js          # услуги, popup, состояние и контракт Checkout
 ORCHESTRATOR.md                        # правила дальнейшей разработки
 .agents/                               # роли специализированных агентов
 ```
@@ -29,7 +34,7 @@ ORCHESTRATOR.md                        # правила дальнейшей р�
 
 Файл `yoleotard-product-card-enhancer.php`:
 
-- регистрирует WordPress-плагин `YOleotard Product Card Enhancer` версии `1.0.1`;
+- регистрирует WordPress-плагин `YOleotard Product Card Enhancer` версии `1.1.0`;
 - подключает CSS и JS на фронтенде через `wp_enqueue_scripts`;
 - передает настройки в браузер через `wp_localize_script` в объект `YOProductCardEnhancerSettings`;
 - добавляет страницу настроек `Settings -> YO Product Cards`;
@@ -126,6 +131,7 @@ Settings -> YO Product Cards
 - `Selectors` - CSS-селекторы карточек, цены, размеров, кнопок;
 - `Sale buttons` - префикс скидки, тексты кнопок, цвета бейджа;
 - `Feed IDs` - URL Google-фида и правила очистки slug.
+- `Product personalization` - включение услуг и их цены в EUR.
 
 ## Минимальные требования к HTML карточки
 
@@ -164,6 +170,8 @@ Settings -> YO Product Cards
 php -l yoleotard-product-card-enhancer\yoleotard-product-card-enhancer.php
 node --check yoleotard-product-card-enhancer\assets\js\frontend.js
 node tests\frontend-sale-button-labels.test.js
+npm test
+php tests\settings.test.php
 git diff --check
 ```
 
