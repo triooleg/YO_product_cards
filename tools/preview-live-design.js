@@ -43,9 +43,27 @@ const path = require('path');
     });
     fs.mkdirSync(path.join(root, 'test-results'), { recursive: true });
     await cards.first().screenshot({ path: path.join(root, 'test-results/live-theme-card.png') });
+    const currencyControls = page.locator('.yo-personalized-card select[data-currency]');
+    const originalCurrencies = await currencyControls.evaluateAll(nodes => nodes.map(node => node.value));
+    await currencyControls.first().selectOption('USD');
+    const changedCurrencies = await currencyControls.evaluateAll(nodes => nodes.map(node => node.value));
+    if (changedCurrencies[0] !== 'USD' || changedCurrencies.slice(1).some((value, i) => value !== originalCurrencies[i + 1])) {
+      throw new Error('Currency leaked to other cards.');
+    }
+    await currencyControls.first().selectOption(originalCurrencies[0]);
     for (const width of [1440, 820, 375, 320]) {
       await page.setViewportSize({ width, height: 1200 });
       await cards.first().scrollIntoViewIfNeeded();
+      const sizes = cards.first().locator('.yo-size-block');
+      const cmHeight = (await sizes.boundingBox()).height;
+      await sizes.locator('[data-unit="in"]').click();
+      const inHeight = (await sizes.boundingBox()).height;
+      const fits = await sizes.locator('.yo-measure').evaluateAll(nodes => nodes.every(node => {
+        const range = document.createRange(); range.selectNodeContents(node);
+        return range.getBoundingClientRect().width <= node.closest('.yo-size-cell').getBoundingClientRect().width - 4;
+      }));
+      if (cmHeight !== inHeight || !fits) throw new Error('Inch ranges do not fit at width ' + width);
+      await sizes.locator('[data-unit="cm"]').click();
       const geometry = await page.evaluate(() => Array.from(document.querySelectorAll('.yo-personalized-card')).slice(0, 3).map(card => {
         const buy = card.querySelector('.yo-purchase-row > a:not(.sale-old-btn)').getBoundingClientRect();
         const currency = card.querySelector('.yo-purchase-row > select').getBoundingClientRect();

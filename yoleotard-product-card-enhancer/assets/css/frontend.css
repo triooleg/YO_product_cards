@@ -29,10 +29,11 @@
 .yo-size-header .yo-unit-toggle button { width: 42px; min-height: 32px; padding: 4px 7px; border: 0; box-shadow: none; background: transparent; color: #555678; font-family: inherit; font-size: 14px; font-weight: 600; line-height: 1.2; text-transform: none; cursor: pointer; }
 .yo-size-header .yo-unit-toggle button.uk-active { background: #0678ff; color: white; }
 .yo-size-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
-.yo-size-cell { text-align: center; min-width: 0; padding: 0 3px; font-size: 16px; line-height: 1.25; overflow-wrap: anywhere; }
+.yo-size-cell { text-align: center; min-width: 0; padding: 0 3px; font-size: 14px; line-height: 1.25; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
 .yo-size-cell + .yo-size-cell { border-left: 1px solid #d6e0f6; }
 .yo-size-label { display: block; margin-bottom: 5px; font-size: 10px; color: #60617f; font-weight: 400; }
-.yo-size-cell .yo-measure { font-weight: 600; }
+.yo-size-cell .yo-measure { font-weight: 600; white-space: nowrap; }
+.yo-size-block { container-type: inline-size; }
 .yo-personalization { margin: 10px 0 14px; color: #15134d; }
 .yo-personalization-heading { display: flex; align-items: center; gap: 8px; min-height: 34px; color: #f00095; }
 .yo-personalization-heading > .yo-icon { width: 25px; height: 25px; }
@@ -126,4 +127,7 @@
   .yo-addon-row { font-size: 11px; }
   .yo-addon-price { font-size: 12px; }
   .yo-personalization-heading > .yo-icon { width: 20px; height: 20px; }
+}
+@container (max-width: 300px) {
+  .yo-size-cell { font-size: 12px; }
 }

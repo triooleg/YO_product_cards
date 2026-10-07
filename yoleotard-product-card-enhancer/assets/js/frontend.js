@@ -16,7 +16,6 @@
     const currencies = cfg.currencies || {};
     const defaultUnit = cfg.defaultUnit || 'cm';
     const defaultCurrency = cfg.defaultCurrency || 'EUR';
-    let activeCurrency = defaultCurrency;
     let fxRequest = null;
     let feedItemsCache = [];
 
@@ -334,12 +333,18 @@
       });
     }
 
+    function getCurrency(cardRoot) {
+      return cardRoot && cardRoot.dataset && cardRoot.dataset.yoCurrency || defaultCurrency;
+    }
+
     function initCurrency() {
       if (!cfg.enableCurrency) return;
       addCurrencyOptions();
       safeQueryAll(document, selectors.currency || '[data-currency]').forEach(sel => {
-        if ('value' in sel) sel.value = activeCurrency;
-        updatePricesInCard(findCardRoot(sel), activeCurrency);
+        const card = findCardRoot(sel);
+        const currency = getCurrency(card);
+        if ('value' in sel) sel.value = currency;
+        updatePricesInCard(card, currency);
       });
     }
 
@@ -368,8 +373,11 @@
         if (!sel) return;
 
         if (!currencies[sel.value]) return;
-        activeCurrency = sel.value;
-        initCurrency();
+        const card = findCardRoot(sel);
+        safeQueryAll(card, selectors.currency || '[data-currency]').forEach(control => {
+          if ('value' in control) control.value = sel.value;
+        });
+        updatePricesInCard(card, sel.value);
       });
     }
 
@@ -460,7 +468,7 @@
     }
 
     window.YOProductCardCore = { cfg, safeQueryAll, findCardRoot, parseRange, formatRange, formatMeasurement,
-      updateMeasuresInCard, setActiveButtons, updatePricesInCard, getCurrency: () => activeCurrency,
+      updateMeasuresInCard, setActiveButtons, updatePricesInCard, getCurrency,
       getSaleDiscountFromClass, applyFeedIds, initSaleButtons, initCurrency, initUnits };
     initUnits();
     setupEvents();

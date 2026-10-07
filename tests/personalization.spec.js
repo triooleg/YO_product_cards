@@ -116,7 +116,7 @@ test('reductions 1..4, validation, cancel, reopen and preserve adjustments', asy
   await expect(c.locator('[data-yo-service="size_adaptation"]')).not.toBeChecked();
   expect((await state(page, 'sale')).addons.size_adaptation.adjustments.chest).toBe(0);
 });
-test('sale plus addons and global currency EUR to USD and back, cm/in', async ({ page }) => {
+test('sale plus addons and independent card currency EUR to USD and back, cm/in', async ({ page }) => {
   await setup(page);
   const c = page.locator('[data-product-id="sale"]');
   await c.locator('[data-yo-service="matching_headpiece"]').check();
@@ -125,10 +125,21 @@ test('sale plus addons and global currency EUR to USD and back, cm/in', async ({
   await expect(c.locator('.sale-new-btn .yo-price')).toHaveText('$431');
   await expect(c.locator('.sale-new-btn .yo-price')).toHaveAttribute('data-eur', '320');
   await expect(c.locator('[data-yo-addon-price="15"]')).toHaveText('+ $19');
-  await expect(page.locator('[data-product-id="normal"] select[data-currency]')).toHaveValue('USD');
-  await expect(page.locator('[data-product-id="normal"] .yo-purchase-row .yo-price')).toHaveText('$463');
+  await expect(page.locator('[data-product-id="normal"] select[data-currency]')).toHaveValue('EUR');
+  await expect(page.locator('[data-product-id="normal"] .yo-purchase-row .yo-price')).toHaveText('370 €');
+  expect((await state(page, 'normal')).currency).toBe('EUR');
+  expect((await state(page, 'sale')).currency).toBe('USD');
+  await page.evaluate(() => window.YOProductCardPersonalization.initialize());
+  await expect(c.locator('select[data-currency]')).toHaveValue('USD');
+  await c.locator('[data-yo-service="extra_rhinestones"]').uncheck();
+  await expect(c.locator('.sale-new-btn .yo-price')).toHaveText('$419');
+  await expect(page.locator('[data-product-id="normal"] .yo-purchase-row .yo-price')).toHaveText('370 €');
+  await c.locator('[data-yo-service="extra_rhinestones"]').check();
+  await page.locator('[data-product-id="normal"] select[data-currency]').selectOption('USD');
   await c.locator('select[data-currency]').selectOption('EUR');
   await expect(c.locator('.sale-new-btn .yo-price')).toHaveText('345 €');
+  await expect(page.locator('[data-product-id="normal"] select[data-currency]')).toHaveValue('USD');
+  await expect(page.locator('[data-product-id="normal"] .yo-purchase-row .yo-price')).toHaveText('$463');
   await c.locator('[data-unit="in"]').click();
   await expect(c.locator('.yo-size-heading')).toHaveText('SIZE (IN)');
   await expect(c.locator('[data-measurement="chest"]')).toHaveText('27.6–28.3');
@@ -239,6 +250,18 @@ for (const [name, width, height] of [['desktop',1440,1000], ['tablet',820,1180],
     }
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     if (name === 'desktop') expect(await page.locator('.grid').evaluate(n => getComputedStyle(n).gridTemplateColumns.split(' ').length)).toBe(3);
+    const sizes = page.locator('[data-product-id="sale"] .yo-size-block');
+    const beforeHeight = (await sizes.boundingBox()).height;
+    await sizes.locator('[data-unit="in"]').click();
+    expect((await sizes.boundingBox()).height).toBe(beforeHeight);
+    const fits = await sizes.locator('.yo-measure').evaluateAll(nodes => nodes.every(node => {
+      const range = document.createRange(); range.selectNodeContents(node);
+      const text = range.getBoundingClientRect();
+      const cell = node.closest('.yo-size-cell').getBoundingClientRect();
+      return text.width <= cell.width - 4 && text.height <= parseFloat(getComputedStyle(node).lineHeight) + 1;
+    }));
+    expect(fits).toBe(true);
+    await sizes.locator('[data-unit="cm"]').click();
     await page.locator('[data-product-id="sale"] .yo-manager-help-toggle').click();
     await expect(page.locator('[data-product-id="sale"] .yo-manager-menu')).toBeVisible();
     await page.locator('[data-product-id="sale"] .yo-manager-help-toggle').click();

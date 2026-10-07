@@ -84,7 +84,7 @@
       return {
         schema_version: 1, product_id: record.state.identity.productId,
         card_key: record.state.identity.key, identity_source: record.state.identity.source,
-        currency: core.getCurrency(), base_price_eur: record.base,
+        currency: core.getCurrency(card), base_price_eur: record.base,
         product_discount_eur: record.discount, discounted_base_price_eur: record.base - record.discount,
         addons_price_eur: Math.round(extra * 100) / 100,
         display_total_eur: Math.round((record.base - record.discount + extra) * 100) / 100,
@@ -108,7 +108,7 @@
           const input = target.querySelector('[data-yo-service="' + key + '"]');
           if (input) input.checked = !!record.state.selected[key] && !input.disabled;
         });
-        core.updatePricesInCard(target, core.getCurrency());
+        core.updatePricesInCard(target, core.getCurrency(target));
         publish(target);
       });
     }
