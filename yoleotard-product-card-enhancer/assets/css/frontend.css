@@ -4,12 +4,11 @@
 .sale-badge { display: inline-block; background: var(--yo-sale-badge-bg, #c00); color: var(--yo-sale-badge-color, #fff); font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 3px; white-space: nowrap; }
 
 /* Scoped to enhanced cards, including hosts styled by Checkout's manager UI. */
-.yo-personalized-card { box-sizing: border-box; position: relative; min-width: 0; padding: 22px 18px 18px; border-radius: 16px; background: #fbfdff; box-shadow: 0 8px 26px #b4c6df24; color: #15134d; font-size: 15px; line-height: 1.4; letter-spacing: 0; }
+.yo-personalized-card { box-sizing: border-box; position: relative; min-width: 0; padding: 22px 18px 18px; border-radius: 16px; background: rgba(255,255,255,.20); box-shadow: 0 8px 26px #b4c6df24; color: #15134d; font-size: 15px; line-height: 1.4; letter-spacing: 0; }
 .yo-personalized-card *, .yo-adaptation-dialog * { box-sizing: border-box; letter-spacing: 0; }
 .yo-personalized-card [hidden] { display: none !important; }
-.yo-personalized-card .el-title { color: #15134d; font-size: 22px; font-weight: 600; line-height: 1.3; margin: 0 0 14px; }
-.yo-personalized-card:has(.yo-card-sale-badge) .el-title { padding-right: 70px; }
-.yo-personalized-card .yo-card-sale-badge { position: absolute; top: 18px; right: 18px; z-index: 2; padding: 7px 12px; border-radius: 8px; background: #ff2356; color: white; font-size: 18px; line-height: 1.3; pointer-events: none; }
+.yo-personalized-card .el-title { color: #15134d; font-size: 22px; font-weight: 600; line-height: 1.3; margin: 0 0 14px !important; }
+.yo-personalized-card .yo-card-sale-badge { float: right; position: relative; z-index: 2; margin: 1px 0 0 8px; padding: 3px 8px; border-radius: 7px; background: #ff2356; color: white; font-size: 15px; line-height: 1.2; pointer-events: none; }
 .yo-personalized-card > .el-content[hidden] + div { margin-top: 0; }
 .yo-icon { display: inline-block; width: 24px; height: 24px; flex: 0 0 auto; background: currentColor; mask: var(--yo-icon) center / contain no-repeat; -webkit-mask: var(--yo-icon) center / contain no-repeat; }
 .yo-icon-ruler { --yo-icon: url("../icons/ruler.svg"); }
@@ -21,7 +20,12 @@
 .yo-icon-shopping-cart { --yo-icon: url("../icons/shopping-cart.svg"); }
 .yo-icon-message-circle { --yo-icon: url("../icons/message-circle.svg"); }
 .yo-icon-chevron-down { --yo-icon: url("../icons/chevron-down.svg"); }
-.yo-size-block { margin: 14px 0 12px; padding: 10px 8px 12px; background: #edf4ff; border-radius: 12px; color: #15134d; }
+.yo-size-block { margin: 0; padding: 10px 8px 12px; background: #eef1f9; border-radius: 0 0 12px 12px; color: #15134d; }
+.yo-product-media { clear: both; background: #eef1f9; border-radius: 12px; overflow: hidden; }
+.yo-product-media > a, .yo-product-media > picture { display: block; line-height: 0; }
+.yo-product-media > a .uk-inline-clip { display: block; margin: 0 !important; }
+.yo-product-media img { display: block; width: 100%; }
+.yo-personalized-card .yo-size-purchase-host { margin-top: 0 !important; }
 .yo-size-header { display: flex; align-items: center; gap: 9px; margin-bottom: 14px; color: #0066ff; }
 .yo-size-header > .yo-icon { width: 27px; height: 27px; }
 .yo-size-heading { font-size: 16px; font-weight: 600; line-height: 1.2; }

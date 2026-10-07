@@ -42,6 +42,13 @@ const path = require('path');
       return image && image.complete && image.naturalWidth > 0;
     });
     fs.mkdirSync(path.join(root, 'test-results'), { recursive: true });
+    const mediaColor = await page.evaluate(() => {
+      const image = document.querySelector('.yo-product-media img');
+      const canvas = document.createElement('canvas'); canvas.width = canvas.height = 1;
+      const ctx = canvas.getContext('2d'); ctx.drawImage(image, 0, 0, 1, 1, 0, 0, 1, 1);
+      return Array.from(ctx.getImageData(0, 0, 1, 1).data);
+    });
+    console.log('Image background pixel:', mediaColor);
     await cards.first().screenshot({ path: path.join(root, 'test-results/live-theme-card.png') });
     const currencyControls = page.locator('.yo-personalized-card select[data-currency]');
     const originalCurrencies = await currencyControls.evaluateAll(nodes => nodes.map(node => node.value));
@@ -56,6 +63,11 @@ const path = require('path');
       await cards.first().scrollIntoViewIfNeeded();
       const sizes = cards.first().locator('.yo-size-block');
       const cmHeight = (await sizes.boundingBox()).height;
+      const media = await cards.first().locator('.yo-product-media > a').boundingBox();
+      const sizeBox = await sizes.boundingBox();
+      if (Math.abs(sizeBox.y - media.y - media.height) > 1 || Math.abs(sizeBox.x - media.x) > 1) {
+        throw new Error(JSON.stringify({ width, media, sizeBox, error: 'Image and measurements are not joined' }));
+      }
       await sizes.locator('[data-unit="in"]').click();
       const inHeight = (await sizes.boundingBox()).height;
       const fits = await sizes.locator('.yo-measure').evaluateAll(nodes => nodes.every(node => {

@@ -146,6 +146,14 @@
       });
       block.appendChild(grid);
       before.before(block);
+      const image = card.querySelector('img');
+      const media = image && (image.closest('a') || image.closest('picture') || image);
+      if (media && media !== card && card.contains(media) && !media.closest('.yo-product-media')) {
+        const group = element('div', 'yo-product-media');
+        media.before(group);
+        group.append(media, block);
+      }
+      if (before.parentElement !== card) before.parentElement.classList.add('yo-size-purchase-host');
       core.safeQueryAll(card, '.yo-unit-label').forEach(node => { node.hidden = true; });
       core.safeQueryAll(card, '.el-content ul').forEach(list => {
         if (Array.from(list.children).every(row => row.hidden)) {
@@ -256,7 +264,11 @@
         buy.replaceChildren(icon('shopping-cart'), label, document.createTextNode(' '), price);
       }
       const badge = buy.querySelector('.sale-badge');
-      if (badge) { badge.classList.add('yo-card-sale-badge'); card.appendChild(badge); }
+      if (badge) {
+        badge.classList.add('yo-card-sale-badge');
+        if (title) title.before(badge);
+        else card.prepend(badge);
+      }
       core.safeQueryAll(card, '.yo-meta-switches').forEach(node => {
         node.hidden = true;
         const meta = node.closest('.el-meta');

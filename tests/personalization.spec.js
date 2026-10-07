@@ -251,6 +251,11 @@ for (const [name, width, height] of [['desktop',1440,1000], ['tablet',820,1180],
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     if (name === 'desktop') expect(await page.locator('.grid').evaluate(n => getComputedStyle(n).gridTemplateColumns.split(' ').length)).toBe(3);
     const sizes = page.locator('[data-product-id="sale"] .yo-size-block');
+    const imageBox = await page.locator('[data-product-id="sale"] .yo-product-media img').boundingBox();
+    const sizeBox = await sizes.boundingBox();
+    expect(Math.abs(sizeBox.y - imageBox.y - imageBox.height)).toBeLessThan(1);
+    expect(Math.abs(sizeBox.x - imageBox.x)).toBeLessThan(1);
+    expect(sizeBox.width).toBe(imageBox.width);
     const beforeHeight = (await sizes.boundingBox()).height;
     await sizes.locator('[data-unit="in"]').click();
     expect((await sizes.boundingBox()).height).toBe(beforeHeight);
@@ -291,4 +296,31 @@ test('modal cm/in converts originals, reductions and preview while keeping cm st
   await expect(page.locator('#yo-reduce-chest')).toHaveValue('-2');
   await page.getByRole('button', { name: 'Apply changes' }).click();
   expect((await state(page, 'normal')).addons.size_adaptation.adjustments).toEqual({ chest: -2, waist: 0, hips: 0, torso: 0 });
+});
+test('compact sale badge allows the second title line to use full card width', async ({ page }) => {
+  await setup(page);
+  const c = page.locator('[data-product-id="sale"]');
+  await c.evaluate(card => {
+    card.style.width = '373px';
+    const title = card.querySelector('.el-title');
+    title.style.minHeight = '0';
+    title.replaceChildren(document.createTextNode('New author’s leotard'), document.createElement('br'),
+      document.createTextNode('“Pink Supernova” 130–140'));
+  });
+  const layout = await c.evaluate(card => {
+    const title = card.querySelector('.el-title'), badge = card.querySelector('.yo-card-sale-badge');
+    const titleBox = title.getBoundingClientRect(), badgeBox = badge.getBoundingClientRect();
+    const text = document.createRange(); text.selectNodeContents(title);
+    const lines = Array.from(text.getClientRects()).filter(rect => rect.width > 0);
+    return { lines: Math.round(titleBox.height / parseFloat(getComputedStyle(title).lineHeight)),
+      secondLineRight: lines[lines.length - 1].right,
+      firstLineRight: badgeBox.left - parseFloat(getComputedStyle(badge).marginLeft),
+      badgeHeight: badgeBox.height, padding: getComputedStyle(title).paddingRight,
+      background: getComputedStyle(card).backgroundColor, rects: lines.map(rect => ({ x: rect.x, y: rect.y, width: rect.width })), title: title.textContent };
+  });
+  expect(layout.lines).toBe(2);
+  expect(layout.secondLineRight, JSON.stringify(layout)).toBeGreaterThan(layout.firstLineRight);
+  expect(layout.badgeHeight).toBeLessThan(29);
+  expect(layout.padding).toBe('0px');
+  expect(layout.background).toBe('rgba(255, 255, 255, 0.2)');
 });
