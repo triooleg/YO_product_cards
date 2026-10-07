@@ -12,6 +12,7 @@
 .yo-personalized-card > .el-content[hidden] + div { margin-top: 0; }
 .yo-icon { display: inline-block; width: 24px; height: 24px; flex: 0 0 auto; background: currentColor; mask: var(--yo-icon) center / contain no-repeat; -webkit-mask: var(--yo-icon) center / contain no-repeat; }
 .yo-icon-ruler { --yo-icon: url("../icons/ruler.svg"); }
+.yo-icon-person-standing { --yo-icon: url("../icons/person-standing.svg"); }
 .yo-icon-tape-measure { --yo-icon: url("../icons/tape-measure.svg"); }
 .yo-icon-wand-sparkles { --yo-icon: url("../icons/wand-sparkles.svg"); }
 .yo-icon-crown { --yo-icon: url("../icons/crown.svg"); }
@@ -32,7 +33,10 @@
 .yo-product-media img { display: block; width: 100%; }
 .yo-personalized-card .yo-size-purchase-host { margin-top: 0 !important; }
 .yo-size-header { display: flex; align-items: center; gap: 9px; margin-bottom: 14px; color: #0066ff; }
-.yo-size-header > .yo-icon { width: 27px; height: 27px; }
+.yo-size-summary { display: flex; align-items: center; gap: 5px; min-width: 0; white-space: nowrap; }
+.yo-size-summary > .yo-icon { width: 24px; height: 24px; }
+.yo-card-height { display: inline-flex; align-items: center; gap: 3px; font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.yo-card-height > .yo-icon { width: 20px; height: 20px; }
 .yo-size-heading { font-size: 16px; font-weight: 600; line-height: 1.2; }
 .yo-size-header .yo-unit-toggle { display: flex; margin-left: auto; flex-shrink: 0; padding: 0; border: 1px solid #dae6fa; border-radius: 14px; overflow: hidden; background: #f7faff; }
 .yo-size-header .yo-unit-toggle button { width: 42px; min-height: 32px; padding: 4px 7px; border: 0; box-shadow: none; background: transparent; color: #555678; font-family: inherit; font-size: 14px; font-weight: 600; line-height: 1.2; text-transform: none; cursor: pointer; }
@@ -144,4 +148,10 @@
 }
 @container (max-width: 300px) {
   .yo-size-cell { font-size: 12px; }
+  .yo-size-header { gap: 6px; }
+  .yo-size-summary { gap: 3px; }
+  .yo-size-summary > .yo-icon { width: 20px; height: 20px; }
+  .yo-size-heading, .yo-card-height { font-size: 12px; }
+  .yo-card-height > .yo-icon { width: 18px; height: 18px; }
+  .yo-size-header .yo-unit-toggle button { width: 34px; }
 }

@@ -63,6 +63,16 @@ const path = require('path');
       await cards.first().scrollIntoViewIfNeeded();
       const sizes = cards.first().locator('.yo-size-block');
       const cmHeight = (await sizes.boundingBox()).height;
+      const heightCheck = await cards.first().evaluate(card => {
+        const tag = card.closest('[data-tag]').getAttribute('data-tag');
+        const range = /Height-(\d+)-(\d+)/i.exec(tag);
+        const value = card.querySelector('.yo-height-value');
+        const header = card.querySelector('.yo-size-header');
+        const summary = header.querySelector('.yo-size-summary').getBoundingClientRect();
+        const toggle = header.querySelector('.yo-unit-toggle').getBoundingClientRect();
+        return value && value.textContent === range[1] + '–' + range[2] && summary.right <= toggle.left && header.scrollWidth <= header.clientWidth;
+      });
+      if (!heightCheck) throw new Error('Filter height or header layout incorrect at width ' + width);
       const media = await cards.first().locator('.yo-product-media > a').boundingBox();
       const sizeBox = await sizes.boundingBox();
       const play = await cards.first().locator('a[data-type="video"] .uk-inline-clip').evaluate(node => {
@@ -75,6 +85,7 @@ const path = require('path');
       }
       await sizes.locator('[data-unit="in"]').click();
       const inHeight = (await sizes.boundingBox()).height;
+      if (!(await sizes.locator('.yo-size-header').evaluate(node => node.scrollWidth <= node.clientWidth))) throw new Error('Inch header overflows at width ' + width);
       const fits = await sizes.locator('.yo-measure').evaluateAll(nodes => nodes.every(node => {
         const range = document.createRange(); range.selectNodeContents(node);
         return range.getBoundingClientRect().width <= node.closest('.yo-size-cell').getBoundingClientRect().width - 4;

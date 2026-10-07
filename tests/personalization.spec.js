@@ -3,7 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const plugin = path.join(__dirname, '..', 'yoleotard-product-card-enhancer');
 function card(id, sale = '', measures = true, video = id === 'sale') {
-  return `<div class="el-item uk-panel ${sale}" ${id ? `data-product-id="${id}"` : ''}>
+  return `<div class="el-item uk-panel ${sale}" data-tag="${id === 'normal' ? 'Height-110-120' : id === 'sale' ? 'Height-145-150' : 'figure-skating'}" ${id ? `data-product-id="${id}"` : ''}>
     <h3 class="el-title">New author's leotard ${id || 'No feed'} for height 145-150</h3>
     <div class="yo-meta-switches"><div><span class="yo-unit-label">Units:</span><div class="yo-unit-toggle"><button data-unit="cm">cm</button><button data-unit="in">in</button></div></div>
     <div><select data-currency><option value="EUR">€ EUR</option><option value="USD">$ USD</option></select></div></div>
@@ -67,6 +67,21 @@ test('video indicator preserves original link and click handler without marking 
   await video.click();
   expect(await page.evaluate(() => window.videoClicks)).toBe(1);
   await expect(page.locator('[data-product-id="normal"] .yo-product-media a[data-type="video"]')).toHaveCount(0);
+});
+
+test('height comes from card filter, converts with units and is omitted for non-height tags', async ({ page }) => {
+  await setup(page);
+  const c = page.locator('[data-product-id="normal"]');
+  await expect(c.locator('.yo-height-value')).toHaveText('110–120');
+  await expect(c.locator('.yo-card-height .yo-icon-person-standing')).toHaveCount(1);
+  await c.locator('[data-unit="in"]').click();
+  await expect(c.locator('.yo-height-value')).toHaveText('43.3–47.2');
+  await expect(c.locator('.yo-card-height')).toHaveAttribute('aria-label', 'Height: 43.3–47.2 in');
+  await c.locator('[data-unit="cm"]').click();
+  await expect(c.locator('.yo-height-value')).toHaveText('110–120');
+  await expect(page.locator('.el-item').last().locator('.yo-card-height, .yo-height-separator')).toHaveCount(0);
+  await page.evaluate(() => window.YOProductCardPersonalization.initialize());
+  await expect(c.locator('.yo-card-height')).toHaveCount(1);
 });
 
 test('normal, sale, each addon, all addons and removing an addon', async ({ page }) => {
@@ -276,6 +291,12 @@ for (const [name, width, height] of [['desktop',1440,1000], ['tablet',820,1180],
       expect(help.height).toBe(buy.height);
       const contentFits = await c.locator('.yo-purchase-row > a:not(.sale-old-btn), .yo-manager-help-toggle').evaluateAll(nodes => nodes.every(node => node.scrollHeight <= node.clientHeight && node.scrollWidth <= node.clientWidth));
       expect(contentFits).toBe(true);
+      const headerFits = await c.locator('.yo-size-header').evaluate(node => {
+        const summary = node.querySelector('.yo-size-summary').getBoundingClientRect();
+        const toggle = node.querySelector('.yo-unit-toggle').getBoundingClientRect();
+        return summary.right <= toggle.left && node.scrollWidth <= node.clientWidth;
+      });
+      expect(headerFits).toBe(true);
       expect(Math.abs((buy.y + buy.height/2) - (currency.y + currency.height/2))).toBeLessThan(2);
       expect(help.y).toBeGreaterThanOrEqual(buy.y + buy.height);
       expect(currency.x).toBeGreaterThanOrEqual(buy.x + buy.width);
@@ -301,6 +322,7 @@ for (const [name, width, height] of [['desktop',1440,1000], ['tablet',820,1180],
     expect(sizeBox.width).toBe(imageBox.width);
     const beforeHeight = (await sizes.boundingBox()).height;
     await sizes.locator('[data-unit="in"]').click();
+    expect(await sizes.locator('.yo-size-header').evaluate(node => node.scrollWidth <= node.clientWidth)).toBe(true);
     expect((await sizes.boundingBox()).height).toBe(beforeHeight);
     const fits = await sizes.locator('.yo-measure').evaluateAll(nodes => nodes.every(node => {
       const range = document.createRange(); range.selectNodeContents(node);

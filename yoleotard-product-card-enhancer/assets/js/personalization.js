@@ -119,8 +119,22 @@
       block = element('section', 'yo-size-block');
       block.setAttribute('aria-label', 'Measurements');
       const header = element('div', 'yo-size-header');
-      header.appendChild(icon('ruler'));
-      header.appendChild(element('strong', 'yo-size-heading', 'SIZE (CM)'));
+      const summary = element('div', 'yo-size-summary');
+      summary.appendChild(icon('ruler'));
+      summary.appendChild(element('strong', 'yo-size-heading', 'SIZE (CM)'));
+      const filterTag = card.closest('[data-tag]');
+      const height = filterTag && /\bHeight-(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)(?=$|[\s,;])/i.exec(filterTag.getAttribute('data-tag') || '');
+      if (height && Number(height[1]) > 0 && Number(height[2]) >= Number(height[1])) {
+        const separator = element('span', 'yo-height-separator', '/');
+        separator.setAttribute('aria-hidden', 'true');
+        const stature = element('span', 'yo-card-height');
+        stature.appendChild(icon('person-standing'));
+        const value = element('span', 'yo-height-value');
+        value.dataset.heightCm = height[1] + '-' + height[2];
+        stature.appendChild(value);
+        summary.append(separator, stature);
+      }
+      header.appendChild(summary);
       let toggle = card.querySelector(cfg.selectors.unitToggle);
       if (!toggle && cfg.enableUnits) {
         toggle = element('div', 'yo-unit-toggle');

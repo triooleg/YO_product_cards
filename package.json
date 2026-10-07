@@ -1,6 +1,6 @@
 {
   "name": "yo_product_cards",
-  "version": "1.1.6",
+  "version": "1.1.7",
   "description": "WordPress-плагин для сайта YOleotard, который переносит фронтенд-логику карточек товара из разрозненных вставок в управляемый плагин.",
   "private": true,
   "directories": {

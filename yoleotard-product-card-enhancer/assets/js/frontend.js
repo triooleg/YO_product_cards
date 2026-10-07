@@ -181,6 +181,12 @@
       const stateRoot = cardRoot.dataset ? cardRoot : document.documentElement;
       stateRoot.dataset.yoUnit = unit;
       safeQueryAll(cardRoot, '.yo-size-heading').forEach(el => { el.textContent = 'SIZE (' + unit.toUpperCase() + ')'; });
+      safeQueryAll(cardRoot, '.yo-height-value[data-height-cm]').forEach(el => {
+        const values = parseRange(el.dataset.heightCm);
+        if (!values) return;
+        el.textContent = formatMeasurement(values, unit);
+        el.parentElement.setAttribute('aria-label', 'Height: ' + el.textContent + ' ' + unit);
+      });
       safeQueryAll(cardRoot, selectors.measure || '.yo-measure[data-cm]').forEach(el => {
         const cmRaw = el.getAttribute('data-cm');
         const cmVals = parseRange(cmRaw);
