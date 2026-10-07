@@ -66,12 +66,16 @@
 
     function formatRange(values, unit) {
       if (!values) return '';
-      if (values.length === 1) return roundSmart(values[0]) + (unit === 'in' ? ' in' : '');
-      return roundSmart(values[0]) + '–' + roundSmart(values[1]) + (unit === 'in' ? ' in' : '');
+      if (values.length === 1) return roundSmart(values[0]);
+      return roundSmart(values[0]) + '–' + roundSmart(values[1]);
     }
 
     function cmToIn(cm) {
       return cm / CM_PER_INCH;
+    }
+
+    function formatMeasurement(values, unit) {
+      return formatRange(unit === 'in' ? values.map(cmToIn) : values, unit);
     }
 
     function findCardRoot(fromEl) {
@@ -185,7 +189,7 @@
 
         el.textContent = unit === 'cm'
           ? String(cmRaw).trim()
-          : formatRange(cmVals.map(cmToIn), 'in');
+          : formatMeasurement(cmVals, 'in');
       });
     }
 
@@ -455,7 +459,7 @@
       });
     }
 
-    window.YOProductCardCore = { cfg, safeQueryAll, findCardRoot, parseRange, formatRange,
+    window.YOProductCardCore = { cfg, safeQueryAll, findCardRoot, parseRange, formatRange, formatMeasurement,
       updateMeasuresInCard, setActiveButtons, updatePricesInCard, getCurrency: () => activeCurrency,
       getSaleDiscountFromClass, applyFeedIds, initSaleButtons, initCurrency, initUnits };
     initUnits();

@@ -1,0 +1,64 @@
+const { chromium } = require('@playwright/test');
+const fs = require('fs');
+const path = require('path');
+
+// Render local assets over a read-only public page; never submit a checkout request.
+(async () => {
+  const browser = await chromium.launch();
+  try {
+    const page = await browser.newPage({ viewport: { width: 1440, height: 1200 } });
+    const root = path.join(__dirname, '..');
+    const plugin = path.join(root, 'yoleotard-product-card-enhancer');
+    await page.route('**/*', async route => {
+      const request = route.request();
+      if (request.method() !== 'GET') return route.abort();
+      const url = new URL(request.url());
+      if (url.pathname.includes('/assets/icons/')) {
+        const icon = path.join(plugin, 'assets/icons', path.basename(url.pathname));
+        if (fs.existsSync(icon)) return route.fulfill({ path: icon, contentType: 'image/svg+xml' });
+      }
+      if (url.pathname.endsWith('/yoleotard-product-card-enhancer/assets/js/frontend.js')) {
+        return route.fulfill({ path: path.join(plugin, 'assets/js/frontend.js'), contentType: 'application/javascript' });
+      }
+      if (url.pathname.endsWith('/yoleotard-product-card-enhancer/assets/css/frontend.css')) {
+        return route.fulfill({ path: path.join(plugin, 'assets/css/frontend.css'), contentType: 'text/css' });
+      }
+      return route.continue();
+    });
+    await page.goto('https://www.yoleotard.com/', { waitUntil: 'domcontentloaded' });
+    await page.waitForFunction(() => !!window.YOProductCardCore);
+    await page.evaluate(() => {
+      window.YOProductCardCore.cfg.personalization = { enabled: true, services: {
+        size_adaptation: { enabled: true, priceEur: 25 }, matching_headpiece: { enabled: true, priceEur: 15 }, extra_rhinestones: { enabled: true, priceEur: 10 }
+      } };
+    });
+    await page.addScriptTag({ path: path.join(plugin, 'assets/js/personalization.js') });
+    const cards = page.locator('.yo-personalized-card');
+    await cards.first().waitFor();
+    await cards.first().scrollIntoViewIfNeeded();
+    await page.waitForFunction(() => document.querySelectorAll('.yo-personalized-card .yo-manager-help').length > 0);
+    await page.waitForFunction(() => {
+      const image = document.querySelector('.yo-personalized-card img');
+      return image && image.complete && image.naturalWidth > 0;
+    });
+    fs.mkdirSync(path.join(root, 'test-results'), { recursive: true });
+    await cards.first().screenshot({ path: path.join(root, 'test-results/live-theme-card.png') });
+    for (const width of [1440, 820, 375, 320]) {
+      await page.setViewportSize({ width, height: 1200 });
+      await cards.first().scrollIntoViewIfNeeded();
+      const geometry = await page.evaluate(() => Array.from(document.querySelectorAll('.yo-personalized-card')).slice(0, 3).map(card => {
+        const buy = card.querySelector('.yo-purchase-row > a:not(.sale-old-btn)').getBoundingClientRect();
+        const currency = card.querySelector('.yo-purchase-row > select').getBoundingClientRect();
+        const help = card.querySelector('.yo-manager-help-toggle')?.getBoundingClientRect();
+        return { aligned: Math.abs(buy.top + buy.height / 2 - currency.top - currency.height / 2) < 2,
+          helpBelow: !help || help.top >= buy.bottom, currencyRight: currency.left >= buy.right };
+      }));
+      if (geometry.some(card => !card.aligned || !card.helpBelow || !card.currencyRight)) throw new Error(JSON.stringify({ width, geometry }));
+      console.log(JSON.stringify({ width, geometry }));
+    }
+    await cards.first().locator('[data-yo-service="size_adaptation"]').check();
+    await page.locator('[data-yo-modal-unit="in"]').click();
+    await page.locator('dialog').screenshot({ path: path.join(root, 'test-results/live-theme-modal.png') });
+    console.log('Live theme preview verified with local assets. No site updates or checkout submissions.');
+  } finally { await browser.close(); }
+})().catch(error => { console.error(error); process.exitCode = 1; });

@@ -1,5 +1,6 @@
 const { test, expect } = require('@playwright/test');
 const path = require('path');
+const fs = require('fs');
 const plugin = path.join(__dirname, '..', 'yoleotard-product-card-enhancer');
 function card(id, sale = '', measures = true) {
   return `<div class="el-item uk-panel ${sale}" ${id ? `data-product-id="${id}"` : ''}>
@@ -17,6 +18,8 @@ function card(id, sale = '', measures = true) {
 async function setup(page, options = {}) {
   await page.route('https://test.local/fixture', route => route.fulfill({ contentType: 'text/html', body: '<!doctype html><html><body></body></html>' }));
   await page.goto('https://test.local/fixture');
+  await page.route('https://test.local/icons/*.svg', route => route.fulfill({ contentType: 'image/svg+xml',
+    body: fs.readFileSync(path.join(plugin, 'assets/icons', path.basename(new URL(route.request().url()).pathname)), 'utf8') }));
   await page.route('**/rates', route => route.fulfill({ json: [{ cc: 'EUR', rate: 40 }, { cc: 'USD', rate: 32 }] }));
   await page.route('**/feed', route => route.fulfill({ contentType: 'text/xml', body: `<?xml version="1.0"?><rss xmlns:g="http://base.google.com/ns/1.0"><channel><item><g:title>No feed for height 145-150</g:title><g:link>https://test.local/yoleotard-product/no_feed_for_height_145_150/</g:link></item></channel></rss>` }));
   await page.setContent(`<style>*{box-sizing:border-box}body{margin:0;padding:16px;font-family:Arial;color:#16164b;background:#f4f8ff}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;max-width:1400px;margin:auto}.el-item{padding:16px;background:#fff}.el-title{font-size:19px;line-height:1.3;min-height:75px}img{width:100%;aspect-ratio:1;object-fit:contain}.uk-button-primary{background:#0077ed;color:white}.uk-button-danger{background:#ff2359;color:white}.help{width:100%;padding:12px;background:#e4f7f2;border:1px solid #50b7ae;color:#087b75}@media(max-width:950px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:600px){.grid{grid-template-columns:1fr}}</style><main class="grid">${card('normal')}${card('sale', 'sale50')}${card('', '', options.valid !== false)}</main>`);
@@ -37,6 +40,15 @@ async function setup(page, options = {}) {
   await page.addStyleTag({ path: path.join(plugin, 'assets/css/frontend.css') });
   await page.addScriptTag({ path: path.join(plugin, 'assets/js/frontend.js') });
   await page.addScriptTag({ path: path.join(plugin, 'assets/js/personalization.js') });
+  if (options.manager) {
+    await page.evaluate(() => {
+      document.querySelectorAll('.help').forEach(node => node.remove());
+      document.querySelectorAll('.yo-purchase-row > a:not(.sale-old-btn)').forEach(node => node.classList.add('yo-main-buy-btn'));
+      window.YOManagerPurchase = { enabled: true, whatsappNumber: '000' };
+    });
+    await page.addStyleTag({ path: path.join(__dirname, 'fixtures/yo-manager-purchase.css') });
+    await page.addScriptTag({ path: path.join(__dirname, 'fixtures/yo-manager-purchase.js') });
+  }
 }
 function state(page, id) {
   return page.evaluate(id => window.YOProductCardPersonalization.getState(id), id);
@@ -78,7 +90,12 @@ test('reductions 1..4, validation, cancel, reopen and preserve adjustments', asy
   }
   await page.locator('#yo-reduce-waist').selectOption('-3');
   await page.locator('#yo-reduce-hips').selectOption('-2');
-  await page.locator('#yo-reduce-torso').selectOption('-1');
+  await expect(page.locator('#yo-reduce-torso')).toBeDisabled();
+  await page.evaluate(() => {
+    const select = document.querySelector('#yo-reduce-torso');
+    select.add(new Option('Invalid', '-1')); select.value = '-1'; select.dispatchEvent(new Event('change'));
+  });
+  await expect(page.locator('[data-yo-adjusted="torso"]')).toHaveText('128–132');
   await page.evaluate(() => {
     const select = document.querySelector('#yo-reduce-chest');
     select.add(new Option('Invalid', '1')); select.value = '1'; select.dispatchEvent(new Event('change'));
@@ -86,7 +103,7 @@ test('reductions 1..4, validation, cancel, reopen and preserve adjustments', asy
   await expect(page.locator('[data-yo-adjusted="chest"]')).toHaveText('70–72');
   await page.locator('#yo-reduce-chest').selectOption('-2');
   await page.getByRole('button', { name: 'Apply changes' }).click();
-  expect((await state(page, 'normal')).addons.size_adaptation.adjustments).toEqual({ chest: -2, waist: -3, hips: -2, torso: -1 });
+  expect((await state(page, 'normal')).addons.size_adaptation.adjustments).toEqual({ chest: -2, waist: -3, hips: -2, torso: 0 });
   await c.getByRole('button', { name: 'Edit', exact: true }).click();
   await expect(page.locator('#yo-reduce-chest')).toHaveValue('-2');
   await page.locator('#yo-reduce-chest').selectOption('-4');
@@ -114,7 +131,7 @@ test('sale plus addons and global currency EUR to USD and back, cm/in', async ({
   await expect(c.locator('.sale-new-btn .yo-price')).toHaveText('345 €');
   await c.locator('[data-unit="in"]').click();
   await expect(c.locator('.yo-size-heading')).toHaveText('SIZE (IN)');
-  await expect(c.locator('[data-measurement="chest"]')).toHaveText('27.6–28.3 in');
+  await expect(c.locator('[data-measurement="chest"]')).toHaveText('27.6–28.3');
   await c.locator('[data-unit="cm"]').click();
   await expect(c.locator('[data-measurement="chest"]')).toHaveText('70–72');
 });
@@ -208,9 +225,23 @@ test('XML feed matching re-applies to dynamically inserted cards', async ({ page
 });
 for (const [name, width, height] of [['desktop',1440,1000], ['tablet',820,1180], ['mobile',375,812], ['small-mobile',320,640]]) {
   test(`layout and modal fit ${name}`, async ({ page }) => {
-    await page.setViewportSize({ width, height }); await setup(page);
+    await page.setViewportSize({ width, height }); await setup(page, { manager: true });
+    for (const id of ['normal', 'sale']) {
+      const c = page.locator('[data-product-id="' + id + '"]');
+      const buy = await c.locator('.yo-purchase-row > a:not(.sale-old-btn)').boundingBox();
+      const currency = await c.locator('select[data-currency]').boundingBox();
+      const help = await c.locator('.yo-manager-help-toggle').boundingBox();
+      expect(Math.abs((buy.y + buy.height/2) - (currency.y + currency.height/2))).toBeLessThan(2);
+      expect(help.y).toBeGreaterThanOrEqual(buy.y + buy.height);
+      expect(currency.x).toBeGreaterThanOrEqual(buy.x + buy.width);
+      const services = await c.locator('.yo-personalization').boundingBox();
+      expect(buy.y).toBeGreaterThanOrEqual(services.y + services.height);
+    }
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     if (name === 'desktop') expect(await page.locator('.grid').evaluate(n => getComputedStyle(n).gridTemplateColumns.split(' ').length)).toBe(3);
+    await page.locator('[data-product-id="sale"] .yo-manager-help-toggle').click();
+    await expect(page.locator('[data-product-id="sale"] .yo-manager-menu')).toBeVisible();
+    await page.locator('[data-product-id="sale"] .yo-manager-help-toggle').click();
     await page.locator('[data-product-id="sale"] [data-yo-service="size_adaptation"]').check();
     const box = await page.locator('dialog').boundingBox();
     expect(box.x).toBeGreaterThanOrEqual(0); expect(box.x + box.width).toBeLessThanOrEqual(width);
@@ -220,3 +251,21 @@ for (const [name, width, height] of [['desktop',1440,1000], ['tablet',820,1180],
     await page.screenshot({ path: `test-results/${name}-cards.png`, fullPage: true });
   });
 }
+test('modal cm/in converts originals, reductions and preview while keeping cm state and locked torso', async ({ page }) => {
+  await setup(page);
+  const c = page.locator('[data-product-id="normal"]');
+  await c.locator('[data-unit="in"]').click();
+  await c.locator('[data-yo-service="size_adaptation"]').check();
+  await expect(page.locator('[data-yo-modal-unit="in"]')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('[data-yo-original="chest"]')).toHaveText('27.6–28.3');
+  await page.locator('#yo-reduce-chest').selectOption('-2');
+  await expect(page.locator('#yo-reduce-chest option:checked')).toHaveText('−0.8');
+  await expect(page.locator('[data-yo-adjusted="chest"]')).toHaveText('26.8–27.6');
+  await expect(page.locator('#yo-reduce-torso')).toBeDisabled();
+  await page.locator('[data-yo-modal-unit="cm"]').click();
+  await expect(page.locator('[data-yo-original="chest"]')).toHaveText('70–72');
+  await expect(page.locator('[data-yo-adjusted="chest"]')).toHaveText('68–70');
+  await expect(page.locator('#yo-reduce-chest')).toHaveValue('-2');
+  await page.getByRole('button', { name: 'Apply changes' }).click();
+  expect((await state(page, 'normal')).addons.size_adaptation.adjustments).toEqual({ chest: -2, waist: 0, hips: 0, torso: 0 });
+});

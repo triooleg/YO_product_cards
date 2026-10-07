@@ -1,89 +1,129 @@
-.sale-wrapper {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
+.sale-wrapper { display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.sale-old-btn { text-decoration: line-through !important; opacity: .55 !important; }
+.sale-new-btn { font-size: 15px !important; }
+.sale-badge { display: inline-block; background: var(--yo-sale-badge-bg, #c00); color: var(--yo-sale-badge-color, #fff); font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 3px; white-space: nowrap; }
 
-.sale-old-btn {
-  text-decoration: line-through !important;
-  opacity: 0.55 !important;
-}
-
-.sale-new-btn {
-  font-size: 15px !important;
-}
-
-.sale-badge {
-  display: inline-block;
-  background: var(--yo-sale-badge-bg, #c00);
-  color: var(--yo-sale-badge-color, #fff);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: .5px;
-  text-transform: uppercase;
-  padding: 2px 7px;
-  border-radius: 3px;
-  white-space: nowrap;
-  vertical-align: middle;
-}
-
-.yo-personalized-card { position: relative; min-width: 0; }
+/* Scoped to enhanced cards, including hosts styled by Checkout's manager UI. */
+.yo-personalized-card { box-sizing: border-box; position: relative; min-width: 0; padding: 22px 18px 18px; border-radius: 16px; background: #fbfdff; box-shadow: 0 8px 26px #b4c6df24; color: #15134d; font-size: 15px; line-height: 1.4; letter-spacing: 0; }
+.yo-personalized-card *, .yo-adaptation-dialog * { box-sizing: border-box; letter-spacing: 0; }
 .yo-personalized-card [hidden] { display: none !important; }
-.yo-personalized-card .yo-card-sale-badge {
-  position: absolute; top: 8px; right: 8px; z-index: 2; font-size: 15px;
-  padding: 6px 10px; letter-spacing: 0; pointer-events: none;
-}
+.yo-personalized-card .el-title { color: #15134d; font-size: 22px; font-weight: 600; line-height: 1.3; margin: 0 0 14px; }
 .yo-personalized-card:has(.yo-card-sale-badge) .el-title { padding-right: 70px; }
-.yo-size-block { margin: 14px 0 10px; padding: 10px; background: #eef5ff; border-radius: 8px; color: #16164b; }
-.yo-size-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
-.yo-size-heading { color: #006be9; font-size: 14px; }
-.yo-size-header .yo-unit-toggle { display: inline-flex; flex-shrink: 0; }
-.yo-size-header .yo-unit-toggle button { padding: 3px 10px; min-height: 30px; line-height: 24px; border: 1px solid #d4dfef; background: #fff; color: #44446b; font-size: 13px; cursor: pointer; }
-.yo-size-header .yo-unit-toggle .uk-active { background: #006be9; color: #fff; border-color: #006be9; }
+.yo-personalized-card .yo-card-sale-badge { position: absolute; top: 18px; right: 18px; z-index: 2; padding: 7px 12px; border-radius: 8px; background: #ff2356; color: white; font-size: 18px; line-height: 1.3; pointer-events: none; }
+.yo-personalized-card > .el-content[hidden] + div { margin-top: 0; }
+.yo-icon { display: inline-block; width: 24px; height: 24px; flex: 0 0 auto; background: currentColor; mask: var(--yo-icon) center / contain no-repeat; -webkit-mask: var(--yo-icon) center / contain no-repeat; }
+.yo-icon-ruler { --yo-icon: url("../icons/ruler.svg"); }
+.yo-icon-tape-measure { --yo-icon: url("../icons/tape-measure.svg"); }
+.yo-icon-wand-sparkles { --yo-icon: url("../icons/wand-sparkles.svg"); }
+.yo-icon-crown { --yo-icon: url("../icons/crown.svg"); }
+.yo-icon-gem { --yo-icon: url("../icons/gem.svg"); }
+.yo-icon-info { --yo-icon: url("../icons/info.svg"); }
+.yo-icon-shopping-cart { --yo-icon: url("../icons/shopping-cart.svg"); }
+.yo-icon-message-circle { --yo-icon: url("../icons/message-circle.svg"); }
+.yo-icon-chevron-down { --yo-icon: url("../icons/chevron-down.svg"); }
+.yo-size-block { margin: 14px 0 12px; padding: 10px 8px 12px; background: #edf4ff; border-radius: 12px; color: #15134d; }
+.yo-size-header { display: flex; align-items: center; gap: 9px; margin-bottom: 14px; color: #0066ff; }
+.yo-size-header > .yo-icon { width: 27px; height: 27px; }
+.yo-size-heading { font-size: 16px; font-weight: 600; line-height: 1.2; }
+.yo-size-header .yo-unit-toggle { display: flex; margin-left: auto; flex-shrink: 0; padding: 0; border: 1px solid #dae6fa; border-radius: 14px; overflow: hidden; background: #f7faff; }
+.yo-size-header .yo-unit-toggle button { width: 42px; min-height: 32px; padding: 4px 7px; border: 0; box-shadow: none; background: transparent; color: #555678; font-family: inherit; font-size: 14px; font-weight: 600; line-height: 1.2; text-transform: none; cursor: pointer; }
+.yo-size-header .yo-unit-toggle button.uk-active { background: #0678ff; color: white; }
 .yo-size-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
-.yo-size-cell { text-align: center; min-width: 0; padding: 0 4px; font-size: 14px; overflow-wrap: anywhere; }
-.yo-size-cell + .yo-size-cell { border-left: 1px solid #d6dff0; }
-.yo-size-label { display: block; font-size: 10px; color: #555778; margin-bottom: 4px; }
-.yo-size-cell .yo-measure { font-weight: 700; }
-.yo-personalization { margin: 10px 0 14px; color: #16164b; }
-.yo-personalization-heading { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 4px 8px; margin-bottom: 4px; }
-.yo-personalization-heading strong { color: #e7007d; font-size: 14px; }
-.yo-personalization-heading > span { font-size: 10px; color: #63637d; }
-.yo-addon-row { display: flex; align-items: center; gap: 6px; min-height: 42px; border-bottom: 1px solid #e6ebf4; font-size: 12px; }
-.yo-addon-label { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; cursor: pointer; }
-.yo-addon-label input { width: 17px; height: 17px; flex-shrink: 0; accent-color: #0077ed; margin: 0; }
+.yo-size-cell { text-align: center; min-width: 0; padding: 0 3px; font-size: 16px; line-height: 1.25; overflow-wrap: anywhere; }
+.yo-size-cell + .yo-size-cell { border-left: 1px solid #d6e0f6; }
+.yo-size-label { display: block; margin-bottom: 5px; font-size: 10px; color: #60617f; font-weight: 400; }
+.yo-size-cell .yo-measure { font-weight: 600; }
+.yo-personalization { margin: 10px 0 14px; color: #15134d; }
+.yo-personalization-heading { display: flex; align-items: center; gap: 8px; min-height: 34px; color: #f00095; }
+.yo-personalization-heading > .yo-icon { width: 25px; height: 25px; }
+.yo-personalization-heading strong { font-size: 15px; font-weight: 600; }
+.yo-personalization-heading > span:not(.yo-icon) { margin-left: auto; color: #686985; font-size: 10px; font-style: italic; white-space: nowrap; }
+.yo-addon-row { display: flex; align-items: center; gap: 5px; min-height: 46px; border-bottom: 1px solid #e1e8f4; font-size: 13px; }
+.yo-addon-label { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; margin: 0; cursor: pointer; }
+.yo-addon-label input { appearance: auto; width: 18px; height: 18px; margin: 0; flex-shrink: 0; accent-color: #087dff; }
+.yo-addon-label > .yo-icon { width: 28px; height: 28px; }
+.yo-addon-label > span:not(.yo-icon) { min-width: 0; }
 .yo-addon-label:has(input:disabled) { opacity: .5; cursor: default; }
-.yo-addon-price { white-space: nowrap; font-weight: 700; }
-.yo-adaptation-edit { padding: 2px; color: #006be9; font-size: 11px; border: 0; background: transparent; cursor: pointer; }
+.yo-addon-price { white-space: nowrap; margin-left: auto; font-size: 14px; font-weight: 600; }
+.yo-addon-info, .yo-adaptation-edit { display: inline-flex; align-items: center; justify-content: center; width: 21px; height: 25px; padding: 0; border: 0; background: transparent; color: #7b7e9c; cursor: pointer; }
+.yo-addon-info .yo-icon { width: 19px; height: 19px; }
+.yo-adaptation-edit .yo-icon { width: 19px; height: 19px; }
+.yo-adaptation-edit { color: #7b7e9c; }
 .yo-addon-info-wrap { position: relative; }
-.yo-addon-info { width: 20px; height: 20px; border: 1px solid #777b99; border-radius: 50%; background: transparent; color: #555778; font-size: 12px; padding: 0; cursor: help; }
-.yo-addon-tooltip { display: none; position: absolute; bottom: 26px; right: -45px; width: 190px; max-width: 60vw; background: #fff; border: 1px solid #d6dff0; box-shadow: 0 3px 12px #0002; padding: 10px; border-radius: 6px; z-index: 4; font-size: 12px; }
+.yo-addon-tooltip { display: none; position: absolute; bottom: 28px; right: -25px; width: 190px; max-width: 60vw; padding: 10px; border: 1px solid #d6dff0; border-radius: 7px; background: white; color: #15134d; box-shadow: 0 3px 12px #0002; z-index: 15; font-size: 12px; }
 .yo-addon-info-wrap:hover .yo-addon-tooltip, .yo-addon-info-wrap:focus-within .yo-addon-tooltip { display: block; }
-.yo-purchase-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; align-items: center; margin: 10px 0; min-height: 44px; }
-.yo-purchase-row a:not(.sale-old-btn) { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 4px; min-width: 0; min-height: 44px; padding: 6px 8px; line-height: 1.3; font-size: 14px !important; border-radius: 8px; }
-.yo-purchase-row .sale-old-btn { background: none !important; color: #63637d !important; border: 0 !important; font-size: 12px; padding: 0 !important; white-space: nowrap; line-height: 1.3; pointer-events: none; }
-.yo-purchase-row a:not(.sale-old-btn) { text-decoration: none; font-weight: 600; }
-.yo-purchase-row select { width: 78px; max-width: 100%; height: 40px; padding: 4px; border: 1px solid #d6dff0; border-radius: 6px; background: #fff; color: #16164b; font-size: 12px; }
-.yo-old-price-spacer { width: 0; }
-.yo-adaptation-dialog { box-sizing: border-box; width: min(480px, calc(100vw - 24px)); max-width: calc(100vw - 24px); max-height: calc(100dvh - 24px); overflow: auto; margin: auto; padding: 24px; border: 1px solid #e0e5ee; border-radius: 8px; background: #fff; color: #16164b; font: 14px/1.5 Arial, sans-serif; }
-.yo-adaptation-dialog::backdrop { background: #171c3b80; }
-.yo-adaptation-dialog h2 { font-size: 20px; line-height: 1.3; margin: 0 24px 12px 0; color: #16164b; }
-.yo-dialog-close { position: absolute; right: 12px; top: 10px; width: 28px; height: 28px; border: 0; background: transparent; font-size: 24px; cursor: pointer; color: #555778; }
-.yo-adaptation-notice { padding: 12px; background: #eef5ff; border-radius: 6px; font-size: 13px; }
-.yo-adaptation-table { margin: 18px 0; }
-.yo-adaptation-row { display: grid; grid-template-columns: 1fr 1.2fr 90px; align-items: center; gap: 6px; padding: 10px 0; border-bottom: 1px solid #e6ebf4; font-size: 13px; }
-.yo-adaptation-row select { width: 100%; min-height: 36px; padding: 5px; border: 1px solid #d6dff0; border-radius: 6px; background: #fff; color: #16164b; }
-.yo-adjusted-preview { background: #fff0f7; border-radius: 6px; padding: 12px 6px; }
-.yo-adjusted-preview > strong { display: block; color: #e7007d; margin-bottom: 12px; padding: 0 6px; }
-.yo-estimate-note { font-size: 12px; color: #63637d; }
-.yo-dialog-apply, .yo-dialog-cancel { width: 100%; min-height: 44px; border-radius: 6px; padding: 8px; font-size: 15px; cursor: pointer; }
-.yo-dialog-apply { background: #ff2359; color: #fff; border: 1px solid #ff2359; margin-bottom: 8px; }
-.yo-dialog-cancel { background: #fff; color: #44446b; border: 1px solid #d6dff0; }
-@media (max-width: 380px) {
+
+/* Help stays in the same host so the manager observer does not recreate it. */
+.yo-personalized-card .yo-purchase-row,
+.yo-personalized-card .yo-purchase-row.yo-manager-actions-host,
+.yo-personalized-card .yo-purchase-row.yo-manager-actions-host.has-discount { display: grid; grid-template-columns: auto minmax(0, 1fr) 88px; align-items: center; gap: 12px 8px; width: 100%; max-width: 100%; margin: 14px 0 0; padding: 0; }
+.yo-personalized-card .yo-purchase-row > a:not(.sale-old-btn) { grid-column: 2; grid-row: 1; display: flex !important; align-items: center; justify-content: center; gap: 6px; flex-wrap: wrap; width: 100%; min-width: 0; min-height: 50px; margin: 0 !important; padding: 9px 8px !important; border: 0 !important; border-radius: 14px; background: #0088ff; color: white; box-shadow: none; font-family: inherit; font-size: 16px !important; font-weight: 600; line-height: 1.2; text-decoration: none; text-transform: none; }
+.yo-personalized-card .yo-purchase-row > a.sale-new-btn { background: #ff2356; }
+.yo-personalized-card .yo-purchase-row > a .yo-icon,
+.yo-personalized-card .yo-purchase-row > a .yo-cart-icon { width: 24px; height: 24px; flex: 0 0 24px; }
+.yo-personalized-card .yo-purchase-row > .sale-old-btn { grid-row: 1; grid-column: 1; background: transparent !important; color: #777992 !important; opacity: 1 !important; border: 0 !important; box-shadow: none !important; min-height: 0; margin: 0 !important; padding: 0 !important; font-size: 14px; font-weight: 600; white-space: nowrap; line-height: 1.3; pointer-events: none; }
+.yo-personalized-card .yo-purchase-row > select { grid-column: 3; grid-row: 1; width: 88px; max-width: 100%; min-height: 46px; height: 46px; margin: 0 !important; padding: 6px 20px 6px 8px; border: 1px solid #e1e8f4; border-radius: 14px; background: #fff url("../icons/chevron-down.svg") right 5px center / 14px no-repeat; appearance: none; box-shadow: 0 3px 8px #c3d0e440; color: #15134d; font-family: inherit; font-size: 14px; line-height: 1.2; }
+.yo-old-price-spacer { grid-column: 1; grid-row: 1; width: 0; }
+.yo-personalized-card .yo-purchase-row > .yo-manager-help,
+.yo-personalized-card .yo-purchase-row > .yo-manager-help-discount { grid-column: 1 / -1; grid-row: 2; display: block; position: relative; right: auto; bottom: auto; width: 100%; max-width: 100%; margin: 0; }
+.yo-personalized-card .yo-manager-help-toggle { display: flex; width: 100%; min-height: 48px; justify-content: center; gap: 10px; padding: 10px; border: 1px solid #58c5bb; border-radius: 14px; box-shadow: none; background: #e8f8f5; color: #007b76; font-size: 16px; line-height: 1.3; white-space: normal; }
+.yo-personalized-card .yo-manager-help-toggle [uk-icon] { width: 22px; height: 22px; flex: 0 0 22px; }
+.yo-personalized-card .yo-manager-help-toggle > [uk-icon]:first-child { background: currentColor; mask: url("../icons/message-circle.svg") center / contain no-repeat; -webkit-mask: url("../icons/message-circle.svg") center / contain no-repeat; }
+.yo-personalized-card .yo-manager-help-toggle > .yo-manager-chevron { background: currentColor; mask: url("../icons/chevron-down.svg") center / contain no-repeat; -webkit-mask: url("../icons/chevron-down.svg") center / contain no-repeat; }
+.yo-personalized-card .yo-manager-help-toggle > [uk-icon] > svg { display: none; }
+.yo-personalized-card .yo-manager-menu { right: 0; max-width: 100%; }
+.yo-personalized-card .yo-purchase-row > .yo-free-shipping-badge-wrap { grid-column: 1 / -1; grid-row: 3; }
+.yo-personalized-card .yo-purchase-row > .help { grid-column: 1 / -1; grid-row: 2; }
+.yo-personalized-card .yo-purchase-row > .yo-manager-help .yo-manager-channel { font-size: 11px; min-height: 54px; background: white; color: #15134d; }
+
+.yo-adaptation-dialog { box-sizing: border-box; width: min(480px, calc(100vw - 24px)); max-width: calc(100vw - 24px); max-height: calc(100dvh - 24px); overflow: auto; margin: auto; padding: 24px; border: 1px solid #e3e9f1; border-radius: 16px; background: #fbfdff; color: #15134d; font-family: inherit; font-size: 14px; line-height: 1.5; }
+.yo-adaptation-dialog::backdrop { background: #1a1d3e80; backdrop-filter: blur(3px); }
+.yo-modal-heading { display: flex; gap: 14px; align-items: center; margin-right: 10px; }
+.yo-modal-heading > .yo-icon { width: 40px; height: 40px; color: #f00095; }
+.yo-adaptation-dialog h2 { font-size: 20px; line-height: 1.3; margin: 0; color: #15134d; font-weight: 600; }
+.yo-dialog-close { position: absolute; right: 10px; top: 8px; width: 28px; height: 28px; border: 0; background: transparent; color: #666986; font-size: 25px; cursor: pointer; }
+.yo-adaptation-notice { padding: 12px; background: #e8f2ff; border-radius: 10px; font-size: 13px; }
+.yo-modal-units { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 16px; }
+.yo-modal-unit-title { font-size: 13px; }
+.yo-modal-unit-toggle { display: flex; border: 1px solid #dae6fa; border-radius: 12px; overflow: hidden; }
+.yo-modal-unit-toggle button { min-width: 40px; min-height: 30px; border: 0; background: #fff; color: #555678; font-size: 14px; cursor: pointer; }
+.yo-modal-unit-toggle button.is-active { background: #f00095; color: white; }
+.yo-adaptation-table { margin: 8px 0 18px; }
+.yo-adaptation-row { display: grid; grid-template-columns: 1fr 1.2fr 92px; align-items: center; gap: 8px; padding: 12px 0; border-bottom: 1px solid #dfe7f3; font-size: 13px; }
+.yo-adaptation-row:first-child { font-size: 11px; }
+.yo-adaptation-row select { width: 100%; min-height: 36px; padding: 6px; border: 1px solid #dbe4f5; border-radius: 10px; background: #fff; color: #15134d; }
+.yo-adaptation-row select:disabled { background: #f3f5fa; color: #8b8ea4; cursor: not-allowed; }
+.yo-adjusted-preview { padding: 14px 8px; border-radius: 12px; background: #fff0f8; }
+.yo-adjusted-preview > strong { display: block; padding: 0 4px; margin-bottom: 14px; color: #f00095; }
+.yo-estimate-note { font-size: 12px; color: #696c86; }
+.yo-dialog-apply, .yo-dialog-cancel { width: 100%; min-height: 46px; border-radius: 12px; padding: 8px; font-size: 15px; cursor: pointer; }
+.yo-dialog-apply { margin-bottom: 8px; background: #ff2356; color: white; border: 1px solid #ff2356; }
+.yo-dialog-cancel { border: 1px solid #dae4f5; background: #fff; color: #555678; }
+@media (max-width: 420px) {
+  .yo-size-cell { font-size: 14px; }
+  .yo-personalized-card { padding: 18px 12px 14px; }
+  .yo-personalized-card .el-title { font-size: 20px; }
+  .yo-personalization-heading { gap: 5px; }
+  .yo-personalization-heading strong { font-size: 13px; }
+  .yo-personalization-heading > span:not(.yo-icon) { font-size: 9px; }
+  .yo-addon-label { gap: 7px; }
+  .yo-addon-label > .yo-icon { width: 23px; height: 23px; }
+  .yo-addon-row { font-size: 12px; }
+  .yo-personalized-card .yo-purchase-row > a:not(.sale-old-btn) { font-size: 14px !important; }
+  .yo-personalized-card .yo-purchase-row > .sale-old-btn { font-size: 12px; }
+}
+@media (max-width: 360px) {
   .yo-size-cell { font-size: 12px; padding: 0 2px; }
-  .yo-adaptation-dialog { padding: 16px; }
-  .yo-adaptation-row { grid-template-columns: .8fr 1.2fr 72px; font-size: 12px; }
-  .yo-purchase-row { gap: 5px; }
-  .yo-purchase-row a:not(.sale-old-btn) { font-size: 12px !important; }
+  .yo-size-label { font-size: 9px; }
+  .yo-adaptation-dialog { padding: 18px 14px; }
+  .yo-adaptation-row { grid-template-columns: .9fr 1.1fr 74px; font-size: 12px; gap: 5px; }
+  .yo-personalized-card .yo-purchase-row,
+  .yo-personalized-card .yo-purchase-row.yo-manager-actions-host,
+  .yo-personalized-card .yo-purchase-row.yo-manager-actions-host.has-discount { grid-template-columns: auto minmax(0, 1fr) 76px; gap: 10px 5px; }
+  .yo-personalized-card .yo-purchase-row > select { width: 76px; font-size: 12px; }
+  .yo-addon-label > .yo-icon { width: 21px; height: 21px; }
+  .yo-addon-label { gap: 5px; }
+  .yo-addon-row { font-size: 11px; }
+  .yo-addon-price { font-size: 12px; }
+  .yo-personalization-heading > .yo-icon { width: 20px; height: 20px; }
 }

@@ -28,6 +28,11 @@
       if (text !== undefined) node.textContent = text;
       return node;
     }
+    function icon(name) {
+      const node = element('span', 'yo-icon yo-icon-' + name);
+      node.setAttribute('aria-hidden', 'true');
+      return node;
+    }
     function servicePrice(key) {
       const price = Number((services[key] || {}).priceEur);
       return Number.isFinite(price) && price >= 0 ? price : 0;
@@ -73,7 +78,7 @@
           (key !== 'size_adaptation' || Object.keys(record.measurements).length === 4));
         const price = servicePrice(key);
         addons[key] = { enabled, price_eur: price };
-        if (key === 'size_adaptation') addons[key].adjustments = Object.assign({}, record.state.adjustments);
+        if (key === 'size_adaptation') addons[key].adjustments = Object.assign({}, record.state.adjustments, { torso: 0 });
         if (enabled) extra += price;
       });
       return {
@@ -114,6 +119,7 @@
       block = element('section', 'yo-size-block');
       block.setAttribute('aria-label', 'Measurements');
       const header = element('div', 'yo-size-header');
+      header.appendChild(icon('ruler'));
       header.appendChild(element('strong', 'yo-size-heading', 'SIZE (CM)'));
       let toggle = card.querySelector(cfg.selectors.unitToggle);
       if (!toggle && cfg.enableUnits) {
@@ -155,8 +161,13 @@
       if (card.querySelector('.yo-personalization')) return;
       const block = element('section', 'yo-personalization');
       const heading = element('div', 'yo-personalization-heading');
+      heading.appendChild(icon('wand-sparkles'));
       heading.appendChild(element('strong', '', 'Personalize your leotard'));
       heading.appendChild(element('span', '', 'Optional services'));
+      const headingInfo = element('button', 'yo-addon-info');
+      headingInfo.type = 'button'; headingInfo.title = 'Optional services are added to the product price.';
+      headingInfo.setAttribute('aria-label', headingInfo.title); headingInfo.appendChild(icon('info'));
+      heading.appendChild(headingInfo);
       block.appendChild(heading);
       Object.keys(labels).forEach(key => {
         if (!services[key] || !services[key].enabled) return;
@@ -167,11 +178,12 @@
         input.checked = !!record.state.selected[key];
         input.disabled = key === 'size_adaptation' && Object.keys(record.measurements).length !== 4;
         label.appendChild(input);
+        label.appendChild(icon({ size_adaptation: 'tape-measure', matching_headpiece: 'crown', extra_rhinestones: 'gem' }[key]));
         label.appendChild(element('span', '', labels[key]));
         if (input.disabled) label.title = 'Size adaptation is unavailable: measurements are incomplete.';
         row.appendChild(label);
         if (tips[key]) {
-          const info = element('button', 'yo-addon-info', 'i');
+          const info = element('button', 'yo-addon-info'); info.appendChild(icon('info'));
           info.type = 'button'; info.setAttribute('aria-label', tips[key]); info.title = tips[key];
           const tip = element('span', 'yo-addon-tooltip', tips[key]);
           const wrapper = element('span', 'yo-addon-info-wrap');
@@ -180,9 +192,10 @@
         const price = element('span', 'yo-addon-price');
         price.dataset.yoAddonPrice = String(servicePrice(key)); row.appendChild(price);
         if (key === 'size_adaptation' && !input.disabled) {
-        const edit = element('button', 'yo-adaptation-edit', 'Edit');
+          const edit = element('button', 'yo-adaptation-edit yo-addon-info'); edit.appendChild(icon('info'));
           edit.type = 'button'; edit.dataset.yoEditAdaptation = '1';
-          edit.title = 'Edit measurement reductions'; row.appendChild(edit);
+          edit.setAttribute('aria-label', 'Edit');
+          edit.title = 'Edit measurement reductions'; row.insertBefore(edit, price);
         }
         block.appendChild(row);
       });
@@ -239,9 +252,8 @@
       }
       if (!oldPrice) {
         const label = element('span', 'yo-buy-label', cfg.sale.newButtonText || 'Buy now');
-        const icon = element('span'); icon.setAttribute('uk-icon', 'icon: cart'); icon.setAttribute('aria-hidden', 'true');
         // Keep price node attributes (including weight) and the original anchor.
-        buy.replaceChildren(icon, label, document.createTextNode(' '), price);
+        buy.replaceChildren(icon('shopping-cart'), label, document.createTextNode(' '), price);
       }
       const badge = buy.querySelector('.sale-badge');
       if (badge) { badge.classList.add('yo-card-sale-badge'); card.appendChild(badge); }
@@ -271,6 +283,7 @@
       const context = modalContext;
       if (applied) {
         context.record.state.adjustments = Object.assign({}, context.draft);
+        context.record.state.adjustments.torso = 0;
         context.record.state.selected.size_adaptation = true;
       }
       dialog.close(); modalContext = null;
@@ -280,34 +293,50 @@
     function openModal(card, opener) {
       const record = cards.get(card);
       if (!record || Object.keys(record.measurements).length !== 4) return;
-      modalContext = { card, record, opener, draft: Object.assign({}, record.state.adjustments) };
+      modalContext = { card, record, opener, unit: card.dataset.yoUnit || 'cm',
+        draft: Object.assign({}, record.state.adjustments, { torso: 0 }) };
       dialog.replaceChildren();
       const close = element('button', 'yo-dialog-close', '×');
       close.type = 'button'; close.setAttribute('aria-label', 'Close');
       close.addEventListener('click', () => closeModal(false));
       const title = element('h2', '', 'Adapt to my measurements'); title.id = 'yo-adaptation-title';
-      dialog.append(close, title, element('p', '', 'We can adjust this ready-to-wear leotard to a smaller size.'),
-        element('p', 'yo-adaptation-notice', 'The size can only be reduced by up to 4 cm. We cannot enlarge ready-to-wear leotards.'));
+      const modalHeading = element('div', 'yo-modal-heading'); modalHeading.append(icon('tape-measure'), title);
+      dialog.append(close, modalHeading, element('p', '', 'We can adjust this ready-to-wear leotard to a smaller size.'),
+        element('p', 'yo-adaptation-notice', 'The size can only be reduced by up to 4 cm. We cannot enlarge ready-to-wear leotards. Torso cannot be altered.'));
+      const units = element('div', 'yo-modal-units');
+      units.appendChild(element('strong', 'yo-modal-unit-title'));
+      const toggle = element('div', 'yo-modal-unit-toggle');
+      ['cm', 'in'].forEach(unit => {
+        const button = element('button', '', unit); button.type = 'button'; button.dataset.yoModalUnit = unit;
+        button.addEventListener('click', () => { modalContext.unit = unit; updatePreview(); });
+        toggle.appendChild(button);
+      });
+      units.appendChild(toggle); dialog.appendChild(units);
       const table = element('div', 'yo-adaptation-table');
       const head = element('div', 'yo-adaptation-row');
-      head.append(element('strong', '', 'Measurement'), element('strong', '', 'Original'), element('strong', '', 'Reduce by'));
+      const originalHeading = element('strong', 'yo-original-heading');
+      const reductionHeading = element('strong', 'yo-reduction-heading');
+      head.append(element('strong', '', 'Measurement'), originalHeading, reductionHeading);
       table.appendChild(head);
       Object.keys(names).forEach(key => {
         const row = element('div', 'yo-adaptation-row');
         const label = element('label', '', names[key]);
         const select = element('select'); select.id = 'yo-reduce-' + key; select.dataset.yoReduce = key;
+        select.disabled = key === 'torso';
+        if (select.disabled) select.title = 'Torso cannot be altered.';
         label.htmlFor = select.id;
-        for (let amount = 0; amount <= 4; amount++) {
+        for (let amount = 0; amount <= (key === 'torso' ? 0 : 4); amount++) {
           const option = element('option', '', amount ? '−' + amount + ' cm' : '0 cm');
           option.value = String(-amount); select.appendChild(option);
         }
         select.value = String(modalContext.draft[key]);
         select.addEventListener('change', () => {
           const amount = Number(select.value);
-          modalContext.draft[key] = Number.isInteger(amount) && amount >= -4 && amount <= 0 ? amount : 0;
+          modalContext.draft[key] = key !== 'torso' && Number.isInteger(amount) && amount >= -4 && amount <= 0 ? amount : 0;
           select.value = String(modalContext.draft[key]); updatePreview();
         });
-        row.append(label, element('span', '', core.formatRange(record.measurements[key].values, 'cm') + ' cm'), select);
+        const original = element('span'); original.dataset.yoOriginal = key;
+        row.append(label, original, select);
         table.appendChild(row);
       });
       const preview = element('section', 'yo-adjusted-preview');
@@ -328,9 +357,27 @@
     }
     function updatePreview() {
       if (!modalContext) return;
+      const unit = modalContext.unit;
+      dialog.querySelector('.yo-adaptation-notice').textContent = 'The size can only be reduced by up to ' +
+        (unit === 'in' ? core.formatMeasurement([4], 'in') + ' inches' : '4 cm') +
+        '. We cannot enlarge ready-to-wear leotards. Torso cannot be altered.';
+      dialog.querySelector('.yo-modal-unit-title').textContent = 'Measurements (' + unit.toUpperCase() + ')';
+      dialog.querySelector('.yo-original-heading').textContent = 'Original (' + unit.toUpperCase() + ')';
+      dialog.querySelector('.yo-reduction-heading').textContent = 'Reduce by (' + unit.toUpperCase() + ')';
+      dialog.querySelectorAll('[data-yo-modal-unit]').forEach(button => {
+        const active = button.dataset.yoModalUnit === unit;
+        button.classList.toggle('is-active', active); button.setAttribute('aria-pressed', String(active));
+      });
       Object.keys(names).forEach(key => {
+        if (key === 'torso') modalContext.draft[key] = 0;
         const values = modalContext.record.measurements[key].values.map(value => value + modalContext.draft[key]);
-        dialog.querySelector('[data-yo-adjusted="' + key + '"]').textContent = core.formatRange(values, 'cm');
+        dialog.querySelector('[data-yo-original="' + key + '"]').textContent = core.formatMeasurement(modalContext.record.measurements[key].values, unit);
+        dialog.querySelector('[data-yo-adjusted="' + key + '"]').textContent = core.formatMeasurement(values, unit);
+        const select = dialog.querySelector('[data-yo-reduce="' + key + '"]');
+        Array.from(select.options).forEach(option => {
+          const amount = Number(option.value);
+          option.textContent = amount === 0 ? '0' : '−' + core.formatMeasurement([Math.abs(amount)], unit);
+        });
       });
     }
     dialog.addEventListener('cancel', event => { event.preventDefault(); closeModal(false); });
