@@ -2,12 +2,12 @@ const { test, expect } = require('@playwright/test');
 const path = require('path');
 const fs = require('fs');
 const plugin = path.join(__dirname, '..', 'yoleotard-product-card-enhancer');
-function card(id, sale = '', measures = true) {
+function card(id, sale = '', measures = true, video = id === 'sale') {
   return `<div class="el-item uk-panel ${sale}" ${id ? `data-product-id="${id}"` : ''}>
     <h3 class="el-title">New author's leotard ${id || 'No feed'} for height 145-150</h3>
     <div class="yo-meta-switches"><div><span class="yo-unit-label">Units:</span><div class="yo-unit-toggle"><button data-unit="cm">cm</button><button data-unit="in">in</button></div></div>
     <div><select data-currency><option value="EUR">€ EUR</option><option value="USD">$ USD</option></select></div></div>
-    <img src="https://www.yoleotard.com/wp-content/themes/yootheme/cache/16/photo_2026-10-06_21-05-39-16498328.jpeg" alt="Leotard front and back">
+    ${video ? '<a href="/video/sample.mp4" data-type="video" data-caption="Product video"><div class="uk-inline-clip">' : ''}<img src="https://www.yoleotard.com/wp-content/themes/yootheme/cache/16/photo_2026-10-06_21-05-39-16498328.jpeg" alt="Leotard front and back">${video ? '</div></a>' : ''}
     <div class="el-content"><ul><li>Chest: <span class="yo-measure" data-cm="70–72">70–72</span></li>
     <li>Waist: <span class="yo-measure" data-cm="60–64">60–64</span></li>
     <li>Hips: <span class="yo-measure" data-cm="74–78">74–78</span></li>
@@ -37,6 +37,10 @@ async function setup(page, options = {}) {
       } }
     };
   }, options);
+  await page.evaluate(() => {
+    const video = document.querySelector('a[data-type="video"]');
+    if (video) video.addEventListener('click', event => { event.preventDefault(); window.videoClicks = (window.videoClicks || 0) + 1; });
+  });
   await page.addStyleTag({ path: path.join(plugin, 'assets/css/frontend.css') });
   await page.addScriptTag({ path: path.join(plugin, 'assets/js/frontend.js') });
   await page.addScriptTag({ path: path.join(plugin, 'assets/js/personalization.js') });
@@ -53,6 +57,18 @@ async function setup(page, options = {}) {
 function state(page, id) {
   return page.evaluate(id => window.YOProductCardPersonalization.getState(id), id);
 }
+test('video indicator preserves original link and click handler without marking plain photos', async ({ page }) => {
+  await setup(page);
+  const video = page.locator('[data-product-id="sale"] .yo-product-media > a[data-type="video"]');
+  await expect(video).toHaveAttribute('href', '/video/sample.mp4');
+  await expect(video).toHaveAttribute('data-caption', 'Product video');
+  await page.evaluate(() => { for (let i = 0; i < 3; i++) window.YOProductCardPersonalization.initialize(); });
+  await expect(video).toHaveCount(1);
+  await video.click();
+  expect(await page.evaluate(() => window.videoClicks)).toBe(1);
+  await expect(page.locator('[data-product-id="normal"] .yo-product-media a[data-type="video"]')).toHaveCount(0);
+});
+
 test('normal, sale, each addon, all addons and removing an addon', async ({ page }) => {
   await setup(page);
   for (const [id, base] of [['normal', 370], ['sale', 320]]) {
@@ -269,6 +285,15 @@ for (const [name, width, height] of [['desktop',1440,1000], ['tablet',820,1180],
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     if (name === 'desktop') expect(await page.locator('.grid').evaluate(n => getComputedStyle(n).gridTemplateColumns.split(' ').length)).toBe(3);
     const sizes = page.locator('[data-product-id="sale"] .yo-size-block');
+    const indicator = await page.locator('[data-product-id="sale"] .uk-inline-clip').evaluate(node => {
+      const style = getComputedStyle(node, '::after');
+      return { width: parseFloat(style.width), height: parseFloat(style.height), left: parseFloat(style.left), top: parseFloat(style.top), containerWidth: node.clientWidth, containerHeight: node.clientHeight, pointerEvents: style.pointerEvents, image: style.backgroundImage };
+    });
+    expect(indicator.width).toBe(40); expect(indicator.height).toBe(40);
+    expect(Math.abs(indicator.left - indicator.containerWidth / 2)).toBeLessThan(1);
+    expect(Math.abs(indicator.top - indicator.containerHeight / 2)).toBeLessThan(1);
+    expect(indicator.pointerEvents).toBe('none');
+    expect(indicator.image).toContain('data:image/svg+xml');
     const imageBox = await page.locator('[data-product-id="sale"] .yo-product-media img').boundingBox();
     const sizeBox = await sizes.boundingBox();
     expect(Math.abs(sizeBox.y - imageBox.y - imageBox.height)).toBeLessThan(1);

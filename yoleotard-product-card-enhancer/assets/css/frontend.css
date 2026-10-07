@@ -24,6 +24,11 @@
 .yo-product-media { clear: both; background: #eef1f9; border-radius: 12px; overflow: hidden; }
 .yo-product-media > a, .yo-product-media > picture { display: block; line-height: 0; }
 .yo-product-media > a .uk-inline-clip { display: block; margin: 0 !important; }
+/* Keep the site's original video indicator after nesting its link in the media group. */
+.yo-product-media > a[data-type="video"] .uk-inline-clip { position: relative; }
+.yo-product-media > a[data-type="video"] .uk-inline-clip::after { content: ""; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40px; height: 40px; z-index: 20; pointer-events: none; background-repeat: no-repeat; background-position: center; background-size: contain; opacity: .4; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 20 20'%3E%3Cpolygon fill='none' stroke='%23000' stroke-width='1.1' points='8.5 7 13.5 10 8.5 13'/%3E%3Ccircle fill='none' stroke='%23000' stroke-width='1.1' cx='10' cy='10' r='9'/%3E%3C/svg%3E"); }
+.yo-product-media > a[data-type="video"]:hover .uk-inline-clip::after,
+.yo-product-media > a[data-type="video"]:focus-visible .uk-inline-clip::after { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
 .yo-product-media img { display: block; width: 100%; }
 .yo-personalized-card .yo-size-purchase-host { margin-top: 0 !important; }
 .yo-size-header { display: flex; align-items: center; gap: 9px; margin-bottom: 14px; color: #0066ff; }

@@ -65,6 +65,11 @@ const path = require('path');
       const cmHeight = (await sizes.boundingBox()).height;
       const media = await cards.first().locator('.yo-product-media > a').boundingBox();
       const sizeBox = await sizes.boundingBox();
+      const play = await cards.first().locator('a[data-type="video"] .uk-inline-clip').evaluate(node => {
+        const style = getComputedStyle(node, '::after');
+        return { visible: style.content !== 'none' && style.backgroundImage !== 'none' && Number(style.opacity) > 0, width: parseFloat(style.width), height: parseFloat(style.height), centered: Math.abs(parseFloat(style.left) - node.clientWidth / 2) < 1 && Math.abs(parseFloat(style.top) - node.clientHeight / 2) < 1 };
+      });
+      if (!play.visible || !play.centered || play.width !== 40 || play.height !== 40) throw new Error(JSON.stringify({ width, play }));
       if (Math.abs(sizeBox.y - media.y - media.height) > 1 || Math.abs(sizeBox.x - media.x) > 1) {
         throw new Error(JSON.stringify({ width, media, sizeBox, error: 'Image and measurements are not joined' }));
       }
@@ -86,6 +91,19 @@ const path = require('path');
       if (geometry.some(card => !card.equalHeight || !card.aligned || !card.helpBelow || !card.currencyRight)) throw new Error(JSON.stringify({ width, geometry }));
       console.log(JSON.stringify({ width, geometry }));
     }
+    await page.setViewportSize({ width: 1440, height: 1200 });
+    const videoLink = cards.first().locator('.yo-product-media > a[data-type="video"]');
+    const videoUrl = await videoLink.getAttribute('href');
+    await videoLink.click();
+    const video = page.locator(`.uk-lightbox video[src=${JSON.stringify(videoUrl)}]`);
+    await video.waitFor({ state: 'visible' });
+    if (!(await video.getAttribute('src')).endsWith(videoUrl)) throw new Error('Lightbox changed the video URL');
+    await page.waitForFunction(url => { const video = Array.from(document.querySelectorAll('.uk-lightbox video')).find(node => node.getAttribute('src') === url); return video && video.readyState >= 1 && video.videoWidth > 0; }, videoUrl);
+    await video.evaluate(node => node.pause());
+    await page.screenshot({ path: path.join(root, 'test-results/live-theme-video.png') });
+    await page.keyboard.press('Escape');
+    await video.waitFor({ state: 'hidden' });
+    console.log('Original video link opens the existing lightbox and loads video metadata.');
     await cards.first().locator('[data-yo-service="size_adaptation"]').check();
     await page.locator('[data-yo-modal-unit="in"]').click();
     await page.locator('dialog').screenshot({ path: path.join(root, 'test-results/live-theme-modal.png') });
