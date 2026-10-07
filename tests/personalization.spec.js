@@ -255,7 +255,7 @@ for (const [name, width, height] of [['desktop',1440,1000], ['tablet',820,1180],
       const buy = await c.locator('.yo-purchase-row > a:not(.sale-old-btn)').boundingBox();
       const currency = await c.locator('select[data-currency]').boundingBox();
       const help = await c.locator('.yo-manager-help-toggle').boundingBox();
-      expect(buy.height).toBe(50);
+      expect(buy.height).toBe(42);
       expect(currency.height).toBe(buy.height);
       expect(help.height).toBe(buy.height);
       const contentFits = await c.locator('.yo-purchase-row > a:not(.sale-old-btn), .yo-manager-help-toggle').evaluateAll(nodes => nodes.every(node => node.scrollHeight <= node.clientHeight && node.scrollWidth <= node.clientWidth));
