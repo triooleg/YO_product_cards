@@ -72,6 +72,10 @@
 .yo-personalized-card .yo-purchase-row > .yo-manager-help,
 .yo-personalized-card .yo-purchase-row > .yo-manager-help-discount { grid-column: 1 / -1; grid-row: 2; display: block; position: relative; right: auto; bottom: auto; width: 100%; max-width: 100%; margin: 0; }
 .yo-personalized-card .yo-manager-help-toggle { display: flex; width: 100%; min-height: 48px; justify-content: center; gap: 10px; padding: 10px; border: 1px solid #58c5bb; border-radius: 14px; box-shadow: none; background: #e8f8f5; color: #007b76; font-size: 16px; line-height: 1.3; white-space: normal; }
+.yo-personalized-card .yo-purchase-row > a:not(.sale-old-btn),
+.yo-personalized-card .yo-purchase-row > select,
+.yo-personalized-card .yo-manager-help-toggle { height: 50px; min-height: 50px; align-items: center; }
+.yo-personalized-card .yo-purchase-row > a:not(.sale-old-btn) { padding: 4px 8px !important; row-gap: 0; }
 .yo-personalized-card .yo-manager-help-toggle [uk-icon] { width: 22px; height: 22px; flex: 0 0 22px; }
 .yo-personalized-card .yo-manager-help-toggle > [uk-icon]:first-child { background: currentColor; mask: url("../icons/message-circle.svg") center / contain no-repeat; -webkit-mask: url("../icons/message-circle.svg") center / contain no-repeat; }
 .yo-personalized-card .yo-manager-help-toggle > .yo-manager-chevron { background: currentColor; mask: url("../icons/chevron-down.svg") center / contain no-repeat; -webkit-mask: url("../icons/chevron-down.svg") center / contain no-repeat; }

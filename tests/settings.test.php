@@ -11,6 +11,14 @@ function sanitize_text_field($value) { return strip_tags($value); }
 function sanitize_textarea_field($value) { return strip_tags($value); }
 function esc_url_raw($value) { return $value; }
 function sanitize_hex_color($value) { return preg_match('/^#[0-9a-f]{3,6}$/i', $value) ? $value : null; }
+function current_user_can($capability) { return true; }
+function admin_url($path) { return '/wp-admin/' . $path; }
+function esc_attr($value) { return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8'); }
+function esc_html($value) { return esc_attr($value); }
+function esc_url($value) { return esc_attr($value); }
+function checked($actual, $expected, $echo = true) { return $actual === $expected ? 'checked="checked"' : ''; }
+function settings_fields($group) {}
+function submit_button($label) { echo '<button type="submit">' . esc_html($label) . '</button>'; }
 require __DIR__ . '/../yoleotard-product-card-enhancer/yoleotard-product-card-enhancer.php';
 function check($condition, $message) { if (!$condition) throw new RuntimeException($message); }
 $plugin = new YO_Product_Card_Enhancer();
@@ -26,4 +34,17 @@ $again = $plugin->sanitize_settings($out);
 check($again['enable_personalization'] === '1', 'Repeated sanitizer call must preserve posted checkboxes.');
 $general = $plugin->sanitize_settings(['_tab' => 'general', 'enabled' => '1']);
 check($general['matching_headpiece_price'] === '21.56' && $general['enable_personalization'] === '1', 'General tab must preserve personalization.');
+$prices = $plugin->sanitize_settings(['_tab' => 'personalization', 'size_adaptation_price' => '0', 'matching_headpiece_price' => '12.5', 'extra_rhinestones_price' => '7.99']);
+check($prices['size_adaptation_price'] === '0' && $prices['matching_headpiece_price'] === '12.5' && $prices['extra_rhinestones_price'] === '7.99', 'All three prices, including zero, must be editable.');
+$GLOBALS['saved_settings'] = $prices;
+$_GET['tab'] = 'personalization';
+ob_start();
+$plugin->render_admin_page();
+$html = ob_get_clean();
+check(strpos($html, 'Дополнительные опции') !== false, 'Addon tab must be visible.');
+foreach (['size_adaptation_price', 'matching_headpiece_price', 'extra_rhinestones_price'] as $key) {
+    check(strpos($html, 'id="yo_pce_' . $key . '"') !== false, 'Price field must be rendered: ' . $key);
+    check(strpos($html, 'name="yo_pce_settings[' . $key . ']" value="' . $prices[$key] . '"') !== false, 'Saved price must be rendered: ' . $key);
+}
+check(substr_count($html, 'min="0" step="0.01"') === 3, 'All addon fields must allow nonnegative cent prices.');
 echo "Settings tests passed.\n";

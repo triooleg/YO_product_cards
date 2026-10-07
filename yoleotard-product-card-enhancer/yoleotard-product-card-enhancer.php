@@ -2,7 +2,7 @@
 /**
  * Plugin Name: YOleotard Product Card Enhancer
  * Description: Adds product card enhancements for YOleotard: cm/in switcher, currency conversion, sale buttons, and Google Shopping feed ID matching.
- * Version: 1.1.3
+ * Version: 1.1.4
  * Author: YOleotard
  * Text Domain: yoleotard-product-card-enhancer
  */
@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
 
 final class YO_Product_Card_Enhancer {
     const OPTION_NAME = 'yo_pce_settings';
-    const VERSION = '1.1.3';
+    const VERSION = '1.1.4';
 
     public function __construct() {
         add_action('wp_enqueue_scripts', [$this, 'enqueue_frontend_assets']);
@@ -318,7 +318,7 @@ final class YO_Product_Card_Enhancer {
             'selectors' => 'Selectors',
             'sale' => 'Sale buttons',
             'feed' => 'Feed IDs',
-            'personalization' => 'Product personalization',
+            'personalization' => 'Дополнительные опции',
         ];
         if (!isset($tabs[$tab])) {
             $tab = 'general';
@@ -350,15 +350,15 @@ final class YO_Product_Card_Enhancer {
         }
 
         if ($tab === 'personalization') {
-            echo '<tr><th scope="row">Product personalization</th><td>';
-            $this->checkbox($settings, 'enable_personalization', 'Enable product personalization');
-            echo '<br>'; $this->checkbox($settings, 'enable_size_adaptation', 'Adapt to my measurements');
-            echo '<br>'; $this->checkbox($settings, 'enable_matching_headpiece', 'Matching headpiece');
-            echo '<br>'; $this->checkbox($settings, 'enable_extra_rhinestones', 'Additional set of rhinestones');
+            echo '<tr><th scope="row">Дополнительные опции</th><td>';
+            $this->checkbox($settings, 'enable_personalization', 'Включить дополнительные опции');
+            echo '<br>'; $this->checkbox($settings, 'enable_size_adaptation', 'Подгонка по меркам');
+            echo '<br>'; $this->checkbox($settings, 'enable_matching_headpiece', 'Украшение для волос');
+            echo '<br>'; $this->checkbox($settings, 'enable_extra_rhinestones', 'Дополнительный набор страз');
             echo '</td></tr>';
-            $this->input($settings, 'size_adaptation_price', 'Size adaptation price (EUR)', 'number');
-            $this->input($settings, 'matching_headpiece_price', 'Matching headpiece price (EUR)', 'number');
-            $this->input($settings, 'extra_rhinestones_price', 'Additional rhinestones price (EUR)', 'number');
+            $this->input($settings, 'size_adaptation_price', 'Подгонка по меркам (EUR)', 'number');
+            $this->input($settings, 'matching_headpiece_price', 'Украшение для волос (EUR)', 'number');
+            $this->input($settings, 'extra_rhinestones_price', 'Дополнительный набор страз (EUR)', 'number');
         }
 
         if ($tab === 'currency') {
@@ -397,7 +397,7 @@ final class YO_Product_Card_Enhancer {
         }
 
         echo '</tbody></table>';
-        submit_button('Save settings');
+        submit_button($tab === 'personalization' ? 'Сохранить настройки' : 'Save settings');
         echo '</form></div>';
     }
 }

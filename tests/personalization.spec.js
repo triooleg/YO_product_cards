@@ -33,7 +33,7 @@ async function setup(page, options = {}) {
       selectors: { card: '.uk-panel, .el-item', feedCard: '.el-item', title: '.el-title', button: 'a.el-link.uk-button', price: '.yo-price[data-eur]', measure: '.yo-measure[data-cm]', currency: 'select[data-currency]', unitToggle: '.yo-unit-toggle' },
       sale: { classPrefix: 'sale', wrapperClass: 'sale-wrapper', readyData: 'saleready', newButtonText: 'Buy now', newButtonClass: 'uk-button-danger' }, feed: {},
       personalization: { enabled: options.enabled !== false, services: {
-        size_adaptation: { enabled: true, priceEur: 25 }, matching_headpiece: { enabled: true, priceEur: 15 }, extra_rhinestones: { enabled: true, priceEur: 10 }
+        size_adaptation: { enabled: true, priceEur: options.prices?.size_adaptation ?? 25 }, matching_headpiece: { enabled: true, priceEur: options.prices?.matching_headpiece ?? 15 }, extra_rhinestones: { enabled: true, priceEur: options.prices?.extra_rhinestones ?? 10 }
       } }
     };
   }, options);
@@ -80,6 +80,19 @@ test('normal, sale, each addon, all addons and removing an addon', async ({ page
   await expect(page.locator('[data-product-id="sale"] .sale-old-btn')).toHaveText('370 €');
   expect((await state(page, 'normal')).addons.size_adaptation.enabled).toBe(false);
 });
+test('configured addon prices including zero apply to normal and sale totals', async ({ page }) => {
+  await setup(page, { prices: { size_adaptation: 0, matching_headpiece: 12.5, extra_rhinestones: 7.99 } });
+  for (const [id, base] of [['normal', 370], ['sale', 320]]) {
+    const c = page.locator(`[data-product-id="${id}"]`);
+    await c.locator('[data-yo-service="size_adaptation"]').check();
+    await page.getByRole('button', { name: 'Apply changes' }).click();
+    expect((await state(page, id)).display_total_eur).toBe(base);
+    await c.locator('[data-yo-service="matching_headpiece"]').check();
+    await c.locator('[data-yo-service="extra_rhinestones"]').check();
+    expect((await state(page, id)).display_total_eur).toBeCloseTo(base + 20.49, 2);
+  }
+});
+
 test('reductions 1..4, validation, cancel, reopen and preserve adjustments', async ({ page }) => {
   await setup(page);
   const c = page.locator('[data-product-id="normal"]');
@@ -242,6 +255,11 @@ for (const [name, width, height] of [['desktop',1440,1000], ['tablet',820,1180],
       const buy = await c.locator('.yo-purchase-row > a:not(.sale-old-btn)').boundingBox();
       const currency = await c.locator('select[data-currency]').boundingBox();
       const help = await c.locator('.yo-manager-help-toggle').boundingBox();
+      expect(buy.height).toBe(50);
+      expect(currency.height).toBe(buy.height);
+      expect(help.height).toBe(buy.height);
+      const contentFits = await c.locator('.yo-purchase-row > a:not(.sale-old-btn), .yo-manager-help-toggle').evaluateAll(nodes => nodes.every(node => node.scrollHeight <= node.clientHeight && node.scrollWidth <= node.clientWidth));
+      expect(contentFits).toBe(true);
       expect(Math.abs((buy.y + buy.height/2) - (currency.y + currency.height/2))).toBeLessThan(2);
       expect(help.y).toBeGreaterThanOrEqual(buy.y + buy.height);
       expect(currency.x).toBeGreaterThanOrEqual(buy.x + buy.width);

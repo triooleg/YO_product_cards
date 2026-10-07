@@ -80,10 +80,10 @@ const path = require('path');
         const buy = card.querySelector('.yo-purchase-row > a:not(.sale-old-btn)').getBoundingClientRect();
         const currency = card.querySelector('.yo-purchase-row > select').getBoundingClientRect();
         const help = card.querySelector('.yo-manager-help-toggle')?.getBoundingClientRect();
-        return { aligned: Math.abs(buy.top + buy.height / 2 - currency.top - currency.height / 2) < 2,
+        return { equalHeight: buy.height === 50 && currency.height === buy.height && (!help || help.height === buy.height), aligned: Math.abs(buy.top + buy.height / 2 - currency.top - currency.height / 2) < 2,
           helpBelow: !help || help.top >= buy.bottom, currencyRight: currency.left >= buy.right };
       }));
-      if (geometry.some(card => !card.aligned || !card.helpBelow || !card.currencyRight)) throw new Error(JSON.stringify({ width, geometry }));
+      if (geometry.some(card => !card.equalHeight || !card.aligned || !card.helpBelow || !card.currencyRight)) throw new Error(JSON.stringify({ width, geometry }));
       console.log(JSON.stringify({ width, geometry }));
     }
     await cards.first().locator('[data-yo-service="size_adaptation"]').check();
