@@ -2,7 +2,7 @@
 /**
  * Plugin Name: YOleotard Product Card Enhancer
  * Description: Adds product card enhancements for YOleotard: cm/in switcher, currency conversion, sale buttons, and Google Shopping feed ID matching.
- * Version: 1.1.7
+ * Version: 1.1.8
  * Author: YOleotard
  * Text Domain: yoleotard-product-card-enhancer
  */
@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
 
 final class YO_Product_Card_Enhancer {
     const OPTION_NAME = 'yo_pce_settings';
-    const VERSION = '1.1.7';
+    const VERSION = '1.1.8';
 
     public function __construct() {
         add_action('wp_enqueue_scripts', [$this, 'enqueue_frontend_assets']);

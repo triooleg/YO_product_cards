@@ -65,7 +65,7 @@ const path = require('path');
       const cmHeight = (await sizes.boundingBox()).height;
       const heightCheck = await cards.first().evaluate(card => {
         const tag = card.closest('[data-tag]').getAttribute('data-tag');
-        const range = /Height-(\d+)-(\d+)/i.exec(tag);
+        const range = /^Height(?:\s+|-)(\d+(?:\.\d+)?)\s*[-–—]\s*(\d+(?:\.\d+)?)$/i.exec(tag.split(',')[0].trim());
         const value = card.querySelector('.yo-height-value');
         const header = card.querySelector('.yo-size-header');
         const summary = header.querySelector('.yo-size-summary').getBoundingClientRect();

@@ -24,6 +24,7 @@ async function setup(page, options = {}) {
   await page.route('**/feed', route => route.fulfill({ contentType: 'text/xml', body: `<?xml version="1.0"?><rss xmlns:g="http://base.google.com/ns/1.0"><channel><item><g:title>No feed for height 145-150</g:title><g:link>https://test.local/yoleotard-product/no_feed_for_height_145_150/</g:link></item></channel></rss>` }));
   await page.setContent(`<style>*{box-sizing:border-box}body{margin:0;padding:16px;font-family:Arial;color:#16164b;background:#f4f8ff}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;max-width:1400px;margin:auto}.el-item{padding:16px;background:#fff}.el-title{font-size:19px;line-height:1.3;min-height:75px}img{width:100%;aspect-ratio:1;object-fit:contain}.uk-button-primary{background:#0077ed;color:white}.uk-button-danger{background:#ff2359;color:white}.help{width:100%;padding:12px;background:#e4f7f2;border:1px solid #50b7ae;color:#087b75}@media(max-width:950px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:600px){.grid{grid-template-columns:1fr}}</style><main class="grid">${card('normal')}${card('sale', 'sale50')}${card('', '', options.valid !== false)}</main>`);
   await page.evaluate(options => {
+    if (Object.prototype.hasOwnProperty.call(options, 'heightTag')) document.querySelector('[data-product-id="normal"]').dataset.tag = options.heightTag;
     window.YOProductCardEnhancerSettings = {
       enabled: true, enableUnits: true, enableCurrency: true, enableSale: true,
       enableFeedIds: !!options.feed, feedUrl: 'https://test.local/feed', cmPerInch: 2.54, defaultCurrency: 'EUR', defaultUnit: 'cm',
@@ -82,6 +83,23 @@ test('height comes from card filter, converts with units and is omitted for non-
   await expect(page.locator('.el-item').last().locator('.yo-card-height, .yo-height-separator')).toHaveCount(0);
   await page.evaluate(() => window.YOProductCardPersonalization.initialize());
   await expect(c.locator('.yo-card-height')).toHaveCount(1);
+});
+
+test('height uses only the first comma-separated tag and supports space or hyphen format', async ({ page }) => {
+  for (const [tag, expected] of [
+    ['Height 170-175, figure skating', '170–175'],
+    ['Height-130-140, Height-145-150', '130–140'],
+    ['  height 165 – 170 , figure skating ', '165–170'],
+    ['figure skating, Height 170-175', null],
+    ['Height 0-175, Height 170-175', null],
+    ['Height 175-170, Height 170-175', null],
+    ['', null]
+  ]) {
+    await setup(page, { heightTag: tag });
+    const c = page.locator('[data-product-id="normal"]');
+    if (expected) await expect(c.locator('.yo-height-value')).toHaveText(expected);
+    else await expect(c.locator('.yo-card-height, .yo-height-separator')).toHaveCount(0);
+  }
 });
 
 test('normal, sale, each addon, all addons and removing an addon', async ({ page }) => {

@@ -11,7 +11,7 @@ WordPress-плагин для сайта YOleotard, который перено�
 - админ-страницу WordPress для включения/отключения модулей и настройки селекторов.
 - дополнительные услуги Ready-to-Wear и popup уменьшения размеров до 4 cm.
 
-Текущая версия: **1.1.7**. Подробности новой функции и контракт Checkout: [Персонализация](docs/PERSONALIZATION.md).
+Текущая версия: **1.1.8**. Подробности новой функции и контракт Checkout: [Персонализация](docs/PERSONALIZATION.md).
 Оплата услуг требует следующего этапа интеграции Checkout: текущая версия готовит выбор и отображает предварительный итог.
 
 Важно: в текущем коде URL фида по умолчанию указывает на `https://www.yoleotard.com/?yoleotard_google_feed=1`. Если рабочий публичный домен проекта должен быть `https://yoloetard.com`, это нужно отдельно синхронизировать в настройках плагина и в коде по умолчанию.
@@ -34,7 +34,7 @@ ORCHESTRATOR.md                        # правила дальнейшей р�
 
 Файл `yoleotard-product-card-enhancer.php`:
 
-- регистрирует WordPress-плагин `YOleotard Product Card Enhancer` версии `1.1.7`;
+- регистрирует WordPress-плагин `YOleotard Product Card Enhancer` версии `1.1.8`;
 - подключает CSS и JS на фронтенде через `wp_enqueue_scripts`;
 - передает настройки в браузер через `wp_localize_script` в объект `YOProductCardEnhancerSettings`;
 - добавляет страницу настроек `Settings -> YO Product Cards`;

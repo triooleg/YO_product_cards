@@ -123,7 +123,8 @@
       summary.appendChild(icon('ruler'));
       summary.appendChild(element('strong', 'yo-size-heading', 'SIZE (CM)'));
       const filterTag = card.closest('[data-tag]');
-      const height = filterTag && /\bHeight-(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)(?=$|[\s,;])/i.exec(filterTag.getAttribute('data-tag') || '');
+      const firstTag = filterTag ? (filterTag.getAttribute('data-tag') || '').split(',')[0].trim() : '';
+      const height = /^Height(?:\s+|-)(\d+(?:\.\d+)?)\s*[-–—]\s*(\d+(?:\.\d+)?)$/i.exec(firstTag);
       if (height && Number(height[1]) > 0 && Number(height[2]) >= Number(height[1])) {
         const separator = element('span', 'yo-height-separator', '/');
         separator.setAttribute('aria-hidden', 'true');
