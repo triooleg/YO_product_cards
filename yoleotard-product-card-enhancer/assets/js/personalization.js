@@ -112,6 +112,32 @@
         publish(target);
       });
     }
+    function syncHeight(card) {
+      const summary = card.querySelector('.yo-size-summary');
+      if (!summary) return;
+      const filterTag = card.closest('[data-tag]');
+      const firstTag = filterTag ? (filterTag.getAttribute('data-tag') || '').split(',')[0].trim() : '';
+      // YOOtheme serializes comma-separated editor tags as space-separated hyphenated tokens.
+      const heightTag = /^Height-/i.test(firstTag) ? firstTag.split(/\s+/)[0] : firstTag;
+      const height = /^Height(?:\s+|-)(\d+(?:\.\d+)?)\s*[-–—]\s*(\d+(?:\.\d+)?)$/i.exec(heightTag);
+      if (!height || Number(height[1]) <= 0 || Number(height[2]) < Number(height[1])) {
+        summary.querySelector('.yo-height-separator')?.remove();
+        summary.querySelector('.yo-card-height')?.remove();
+        return;
+      }
+      let value = summary.querySelector('.yo-height-value');
+      if (!value) {
+        const separator = element('span', 'yo-height-separator', '/');
+        separator.setAttribute('aria-hidden', 'true');
+        const stature = element('span', 'yo-card-height');
+        stature.appendChild(icon('person-standing'));
+        value = element('span', 'yo-height-value');
+        stature.appendChild(value);
+        summary.append(separator, stature);
+      }
+      const range = height[1] + '-' + height[2];
+      if (value.dataset.heightCm !== range) value.dataset.heightCm = range;
+    }
     function moveSizeBlock(card, measurements, before) {
       if (Object.keys(measurements).length !== 4) return;
       let block = card.querySelector('.yo-size-block');
@@ -122,19 +148,6 @@
       const summary = element('div', 'yo-size-summary');
       summary.appendChild(icon('ruler'));
       summary.appendChild(element('strong', 'yo-size-heading', 'SIZE (CM)'));
-      const filterTag = card.closest('[data-tag]');
-      const firstTag = filterTag ? (filterTag.getAttribute('data-tag') || '').split(',')[0].trim() : '';
-      const height = /^Height(?:\s+|-)(\d+(?:\.\d+)?)\s*[-–—]\s*(\d+(?:\.\d+)?)$/i.exec(firstTag);
-      if (height && Number(height[1]) > 0 && Number(height[2]) >= Number(height[1])) {
-        const separator = element('span', 'yo-height-separator', '/');
-        separator.setAttribute('aria-hidden', 'true');
-        const stature = element('span', 'yo-card-height');
-        stature.appendChild(icon('person-standing'));
-        const value = element('span', 'yo-height-value');
-        value.dataset.heightCm = height[1] + '-' + height[2];
-        stature.appendChild(value);
-        summary.append(separator, stature);
-      }
       header.appendChild(summary);
       let toggle = card.querySelector(cfg.selectors.unitToggle);
       if (!toggle && cfg.enableUnits) {
@@ -169,6 +182,7 @@
         group.append(media, block);
       }
       if (before.parentElement !== card) before.parentElement.classList.add('yo-size-purchase-host');
+      syncHeight(card);
       core.safeQueryAll(card, '.yo-unit-label').forEach(node => { node.hidden = true; });
       core.safeQueryAll(card, '.el-content ul').forEach(list => {
         if (Array.from(list.children).every(row => row.hidden)) {
@@ -231,6 +245,7 @@
       const title = card.querySelector(cfg.selectors.title);
       if (!price || (!measureNodes(card).length && !(title && /for height/i.test(title.textContent)))) return;
       if (cards.has(card) && card.querySelector('.yo-personalization')) {
+        syncHeight(card);
         const record = cards.get(card);
         synchronizeIdentity(card, record);
         const current = readMeasurements(card);
@@ -460,7 +475,7 @@
       requestAnimationFrame(() => { pending = false; initialize(); });
     });
     function observe() { observer.observe(document.body, { childList: true, subtree: true, attributes: true,
-      attributeFilter: ['data-feed-id', 'data-product-id', 'data-cm'] }); }
+      attributeFilter: ['data-feed-id', 'data-product-id', 'data-cm', 'data-tag'] }); }
     initialize();
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);

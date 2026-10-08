@@ -20,21 +20,30 @@ const path = require('path');
       if (url.pathname.endsWith('/yoleotard-product-card-enhancer/assets/js/frontend.js')) {
         return route.fulfill({ path: path.join(plugin, 'assets/js/frontend.js'), contentType: 'application/javascript' });
       }
+      if (url.pathname.endsWith('/yoleotard-product-card-enhancer/assets/js/personalization.js')) {
+        return route.fulfill({ path: path.join(plugin, 'assets/js/personalization.js'), contentType: 'application/javascript' });
+      }
       if (url.pathname.endsWith('/yoleotard-product-card-enhancer/assets/css/frontend.css')) {
         return route.fulfill({ path: path.join(plugin, 'assets/css/frontend.css'), contentType: 'text/css' });
       }
       return route.continue();
     });
-    await page.goto('https://www.yoleotard.com/', { waitUntil: 'domcontentloaded' });
+    await page.goto(process.argv[2] || 'https://www.yoleotard.com/', { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => !!window.YOProductCardCore);
     await page.evaluate(() => {
       window.YOProductCardCore.cfg.personalization = { enabled: true, services: {
         size_adaptation: { enabled: true, priceEur: 25 }, matching_headpiece: { enabled: true, priceEur: 15 }, extra_rhinestones: { enabled: true, priceEur: 10 }
       } };
     });
-    await page.addScriptTag({ path: path.join(plugin, 'assets/js/personalization.js') });
+    if (!(await page.evaluate(() => !!window.YOProductCardPersonalization))) await page.addScriptTag({ path: path.join(plugin, 'assets/js/personalization.js') });
     const cards = page.locator('.yo-personalized-card');
     await cards.first().waitFor();
+    const frozen = cards.filter({ hasText: 'Frozen Sakura' });
+    if (await frozen.count()) {
+      const value = await frozen.first().locator('.yo-height-value').textContent();
+      if (value !== '170–175') throw new Error('Frozen Sakura height missing or wrong: ' + value);
+      console.log('Frozen Sakura filter height verified:', value);
+    }
     await cards.first().scrollIntoViewIfNeeded();
     await page.waitForFunction(() => document.querySelectorAll('.yo-personalized-card .yo-manager-help').length > 0);
     await page.waitForFunction(() => {
@@ -50,6 +59,11 @@ const path = require('path');
     });
     console.log('Image background pixel:', mediaColor);
     await cards.first().screenshot({ path: path.join(root, 'test-results/live-theme-card.png') });
+    if (await frozen.count()) {
+      await frozen.first().scrollIntoViewIfNeeded();
+      await frozen.first().locator('.yo-product-media img').evaluate(image => image.complete && image.naturalWidth > 0 || new Promise(resolve => image.addEventListener('load', resolve, { once: true })));
+      await frozen.first().screenshot({ path: path.join(root, 'test-results/live-theme-frozen-height.png') });
+    }
     const currencyControls = page.locator('.yo-personalized-card select[data-currency]');
     const originalCurrencies = await currencyControls.evaluateAll(nodes => nodes.map(node => node.value));
     await currencyControls.first().selectOption('USD');
@@ -65,7 +79,9 @@ const path = require('path');
       const cmHeight = (await sizes.boundingBox()).height;
       const heightCheck = await cards.first().evaluate(card => {
         const tag = card.closest('[data-tag]').getAttribute('data-tag');
-        const range = /^Height(?:\s+|-)(\d+(?:\.\d+)?)\s*[-–—]\s*(\d+(?:\.\d+)?)$/i.exec(tag.split(',')[0].trim());
+        const firstTag = tag.split(',')[0].trim();
+        const heightTag = /^Height-/i.test(firstTag) ? firstTag.split(/\s+/)[0] : firstTag;
+        const range = /^Height(?:\s+|-)(\d+(?:\.\d+)?)\s*[-–—]\s*(\d+(?:\.\d+)?)$/i.exec(heightTag);
         const value = card.querySelector('.yo-height-value');
         const header = card.querySelector('.yo-size-header');
         const summary = header.querySelector('.yo-size-summary').getBoundingClientRect();
@@ -73,8 +89,11 @@ const path = require('path');
         return value && value.textContent === range[1] + '–' + range[2] && summary.right <= toggle.left && header.scrollWidth <= header.clientWidth;
       });
       if (!heightCheck) throw new Error('Filter height or header layout incorrect at width ' + width);
-      const media = await cards.first().locator('.yo-product-media > a').boundingBox();
-      const sizeBox = await sizes.boundingBox();
+      const { media, sizeBox } = await cards.first().evaluate(card => {
+        const photo = card.querySelector('.yo-product-media > a').getBoundingClientRect();
+        const size = card.querySelector('.yo-size-block').getBoundingClientRect();
+        return { media: { x: photo.x, y: photo.y, width: photo.width, height: photo.height }, sizeBox: { x: size.x, y: size.y, width: size.width, height: size.height } };
+      });
       const play = await cards.first().locator('a[data-type="video"] .uk-inline-clip').evaluate(node => {
         const style = getComputedStyle(node, '::after');
         return { visible: style.content !== 'none' && style.backgroundImage !== 'none' && Number(style.opacity) > 0, width: parseFloat(style.width), height: parseFloat(style.height), centered: Math.abs(parseFloat(style.left) - node.clientWidth / 2) < 1 && Math.abs(parseFloat(style.top) - node.clientHeight / 2) < 1 };

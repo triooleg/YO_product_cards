@@ -17,7 +17,7 @@
 - Основной файл: `yoleotard-product-card-enhancer/yoleotard-product-card-enhancer.php`.
 - Фронтенд-логика: `yoleotard-product-card-enhancer/assets/js/frontend.js`.
 - Стили: `yoleotard-product-card-enhancer/assets/css/frontend.css`.
-- Версия плагина: `1.1.8`.
+- Версия плагина: `1.1.9`.
 - Модуль персонализации: `assets/js/personalization.js`. Контракт и проверки: `docs/PERSONALIZATION.md`.
 - Архив обновления: `plugin-archives/yoleotard-product-card-enhancer.zip`.
 - Опция настроек WordPress: `yo_pce_settings`.

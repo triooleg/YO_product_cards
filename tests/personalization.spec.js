@@ -89,8 +89,11 @@ test('height uses only the first comma-separated tag and supports space or hyphe
   for (const [tag, expected] of [
     ['Height 170-175, figure skating', '170–175'],
     ['Height-130-140, Height-145-150', '130–140'],
+    ['Height-170-175 figure-skating', '170–175'],
+    ['Height-130-140 Height-145-150', '130–140'],
     ['  height 165 – 170 , figure skating ', '165–170'],
     ['figure skating, Height 170-175', null],
+    ['figure-skating Height-170-175', null],
     ['Height 0-175, Height 170-175', null],
     ['Height 175-170, Height 170-175', null],
     ['', null]
@@ -100,6 +103,30 @@ test('height uses only the first comma-separated tag and supports space or hyphe
     if (expected) await expect(c.locator('.yo-height-value')).toHaveText(expected);
     else await expect(c.locator('.yo-card-height, .yo-height-separator')).toHaveCount(0);
   }
+});
+
+test('parent filter tag changes update height without resetting card choices', async ({ page }) => {
+  await setup(page);
+  const c = page.locator('[data-product-id="normal"]');
+  await c.locator('[data-yo-service="matching_headpiece"]').check();
+  await c.locator('[data-unit="in"]').click();
+  await c.locator('[data-currency]').selectOption('USD');
+  await page.evaluate(() => {
+    const card = document.querySelector('[data-product-id="normal"]');
+    card.removeAttribute('data-tag');
+    const parent = document.createElement('div'); parent.dataset.tag = 'Height-170-175 figure-skating';
+    card.before(parent); parent.appendChild(card);
+  });
+  await expect(c.locator('.yo-height-value')).toHaveText('66.9–68.9');
+  await page.evaluate(() => document.querySelector('[data-product-id="normal"]').parentElement.dataset.tag = 'Height-160-165 figure-skating');
+  await expect(c.locator('.yo-height-value')).toHaveText('63–65');
+  await page.evaluate(() => document.querySelector('[data-product-id="normal"]').parentElement.dataset.tag = 'figure-skating Height-170-175');
+  await expect(c.locator('.yo-card-height')).toHaveCount(0);
+  await page.evaluate(() => document.querySelector('[data-product-id="normal"]').parentElement.dataset.tag = 'Height-170-175 figure-skating');
+  await expect(c.locator('.yo-height-value')).toHaveText('66.9–68.9');
+  await expect(c.locator('.yo-card-height')).toHaveCount(1);
+  await expect(c.locator('[data-yo-service="matching_headpiece"]')).toBeChecked();
+  await expect(c.locator('[data-currency]')).toHaveValue('USD');
 });
 
 test('normal, sale, each addon, all addons and removing an addon', async ({ page }) => {
